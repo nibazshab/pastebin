@@ -1,2 +1,34 @@
 # pastebin
-pastebin / 文本存储
+
+文本粘贴板，生成一个纯文本的网页
+
+附带一个浏览器前端页面
+
+## 使用说明
+
+默认监听 10002 端口，数据以文件的形式储存在 pastebin 文件同目录的 tmp 目录下（需要自己手动创建）
+
+1. 编译 main.go
+2. 创建 tmp 目录
+3. 运行程序 `./pastebin`
+
+__编译步骤：__
+
+```sh
+git clone https://github.com/nibazshab/pastebin.git
+cd webdav
+go get -d -v ./...
+CGO_ENABLED=0 go build -ldflags="-s -w"
+```
+
+## 计划
+
+- [ ] 响应 `dmesg | curl -F "t=@-" host` 形式的请求
+
+## 开源地址
+
+https://github.com/nibazshab/pastebin
+
+## 使用许可
+
+MIT © ZShab Niba
