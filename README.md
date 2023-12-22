@@ -16,7 +16,7 @@ __编译步骤：__
 
 ```sh
 git clone https://github.com/nibazshab/pastebin.git
-cd webdav
+cd pastebin
 go get -d -v ./...
 CGO_ENABLED=0 go build -ldflags="-s -w"
 ```
