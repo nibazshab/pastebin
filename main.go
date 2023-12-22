@@ -31,7 +31,6 @@ func handleIndex(w http.ResponseWriter, r *http.Request) {
 func handlePost(w http.ResponseWriter, r *http.Request){
   r.ParseForm()
   if !r.PostForm.Has("t") {
-    w.Write([]byte("error"))
     return
   }
 
