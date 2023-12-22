@@ -14,8 +14,10 @@ import (
 //go:embed index.html
 var static embed.FS
 
+const tmpDir = "tmp"
+
 func handleRaw(w http.ResponseWriter, r *http.Request) {
-  f := filepath.Join(strings.TrimPrefix(r.URL.Path, "/"))
+  f := filepath.Join(tmpDir, strings.TrimPrefix(r.URL.Path, "/"))
   w.Header().Set("Content-type", "text/plain; charset=UTF-8")
   c, _ := ioutil.ReadFile(f)
   w.Write(c)
@@ -29,6 +31,7 @@ func handleIndex(w http.ResponseWriter, r *http.Request) {
 func handlePost(w http.ResponseWriter, r *http.Request){
   r.ParseForm()
   if !r.PostForm.Has("t") {
+    w.Write([]byte("error"))
     return
   }
 
@@ -41,7 +44,7 @@ func handlePost(w http.ResponseWriter, r *http.Request){
   }
 
   t := r.PostFormValue("t")
-  ioutil.WriteFile(f, []byte(t), 0666)
+  ioutil.WriteFile(filepath.Join(tmpDir, f), []byte(t), 0666)
 
   w.Write([]byte(r.Host + "/" + f))
 }
