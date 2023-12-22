@@ -18,11 +18,11 @@
 <body>
   <form onsubmit="addMessage(event)">
     <textarea></textarea><br>
-    <input type="submit" value="粘贴">
+    <input type="submit" value="PASTE">
   </form>
-  <pre><p>链接：<span></span></p></pre><br><br>
-  <pre><p>这是一个简单的 pastebin 工具，你可以将你的文本内容粘贴到这里，然后会生成一个包含所粘贴的文本内容的链接</p></pre>
-  <pre><p>！！！请不要在这里存放任何重要数据，因为随时可能会被删除</p></pre>
+  <pre><p>LINK: <span></span></p></pre><br><br>
+  <pre><p>A simple pastebin</p></pre>
+  <pre><p>!!! Everything may be removed at any time</p></pre>
   <script>
     function addMessage(event) {
       event.preventDefault();
@@ -30,7 +30,7 @@
       var t = document.querySelector('textarea').value;
 
       if (t.trim() === '') {
-        alert("内容不能为空");
+        alert("Null is not allowed");
         return;
       }
 
