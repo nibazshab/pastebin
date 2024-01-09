@@ -17,15 +17,13 @@ var static embed.FS
 const tmpDir = "tmp"
 
 func handleRaw(w http.ResponseWriter, r *http.Request) {
-    f := filepath.Join(tmpDir, strings.TrimPrefix(r.URL.Path, "/"))
     w.Header().Set("Content-type", "text/plain; charset=UTF-8")
-    c, _ := ioutil.ReadFile(f)
+    c, _ := ioutil.ReadFile(filepath.Join(tmpDir, strings.TrimPrefix(r.URL.Path, "/")))
     w.Write(c)
 }
 
 func handleIndex(w http.ResponseWriter, r *http.Request) {
-    t := template.Must(template.ParseFS(static, "index.html"))
-    t.Execute(w, nil)
+    template.Must(template.ParseFS(static, "index.html")).Execute(w, nil)
 }
 
 func handlePost(w http.ResponseWriter, r *http.Request) {
@@ -38,12 +36,10 @@ func handlePost(w http.ResponseWriter, r *http.Request) {
     a := "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
     var f string
     for i := 0; i < 7; i++ {
-        char := a[rand.Intn(len(a))]
-        f += string(char)
+        f += string(a[rand.Intn(len(a))])
     }
 
-    t := r.PostFormValue("t")
-    ioutil.WriteFile(filepath.Join(tmpDir, f), []byte(t), 0666)
+    ioutil.WriteFile(filepath.Join(tmpDir, f), []byte(r.PostFormValue("t")), 0666)
 
     w.Write([]byte(r.Host + "/" + f))
 }
@@ -60,6 +56,5 @@ func main() {
             handleRaw(w, r)
         }
     })
-
     http.ListenAndServe(":10002", nil)
 }
