@@ -15,9 +15,9 @@
         <textarea></textarea><br>
         <input type="submit" value="PASTE">
     </form>
-    <pre><p>LINK: <span></span></p></pre><br><br>
-    <pre><p>A simple pastebin</p></pre>
-    <pre><p>!!! Everything may be removed at any time</p></pre>
+    <pre><p>LINK: <span></span></p></pre>
+    <br><br>
+    <pre><p>!!! Data may be erased without notifications</p></pre>
     <script>
         function addMessage(event) {
             event.preventDefault();
@@ -28,6 +28,9 @@
                 alert("Null is not allowed");
                 return;
             }
+
+            document.querySelector('input').style.display = 'none';
+            document.querySelector('span').textContent = 'waiting...';
 
             var requestOptions = {
                 method: 'POST',
@@ -40,7 +43,6 @@
                 .then(response => response.text())
                 .then(f => {
                     document.querySelector('span').textContent = f;
-                    document.querySelector('input').style.display = 'none';
                 });
         }
     </script>
