@@ -1,14 +1,14 @@
 package main
 
 import (
-    "embed"
-    "html/template"
-    "io/ioutil"
-    "math/rand"
-    "net/http"
-    "path/filepath"
-    "strings"
-    "time"
+	"embed"
+	"html/template"
+	"math/rand"
+	"net/http"
+	"os"
+	"path/filepath"
+	"strings"
+	"time"
 )
 
 //go:embed index.html
@@ -18,7 +18,7 @@ const tmpDir = "tmp"
 
 func handleRaw(w http.ResponseWriter, r *http.Request) {
     w.Header().Set("Content-type", "text/plain; charset=UTF-8")
-    c, _ := ioutil.ReadFile(filepath.Join(tmpDir, strings.TrimPrefix(r.URL.Path, "/")))
+    c, _ := os.ReadFile(filepath.Join(tmpDir, strings.TrimPrefix(r.URL.Path, "/")))
     w.Write(c)
 }
 
@@ -29,17 +29,16 @@ func handleIndex(w http.ResponseWriter, r *http.Request) {
 func handlePost(w http.ResponseWriter, r *http.Request) {
     r.ParseForm()
     if !r.PostForm.Has("t") {
-        return
+		return
     }
 
-    rand.Seed(time.Now().UnixNano())
     a := "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
     var f string
     for i := 0; i < 7; i++ {
-        f += string(a[rand.Intn(len(a))])
+        f += string(a[rand.New(rand.NewSource(time.Now().UnixNano())).Intn(len(a))])
     }
 
-    ioutil.WriteFile(filepath.Join(tmpDir, f), []byte(r.PostFormValue("t")), 0666)
+    os.WriteFile(filepath.Join(tmpDir, f), []byte(r.PostFormValue("t")), 0666)
 
     w.Write([]byte(r.Host + "/" + f))
 }
