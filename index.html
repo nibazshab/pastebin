@@ -18,34 +18,34 @@
     <pre><p>LINK: <span></span></p></pre>
     <br><br>
     <pre><p>!!! Data may be erased without notifications</p></pre>
-    <script>
-        function addMessage(event) {
-            event.preventDefault();
-
-            var t = document.querySelector('textarea').value;
-
-            if (t.trim() === '') {
-                alert("Null is not allowed");
-                return;
-            }
-
-            document.querySelector('input').style.display = 'none';
-            document.querySelector('span').textContent = 'waiting...';
-
-            var requestOptions = {
-                method: 'POST',
-                body: new URLSearchParams({
-                    t: t
-                })
-            };
-
-            fetch('/', requestOptions)
-                .then(response => response.text())
-                .then(f => {
-                    document.querySelector('span').textContent = f;
-                });
-        }
-    </script>
 </body>
+<script>
+    function addMessage(event) {
+        event.preventDefault();
+
+        var t = document.querySelector('textarea').value;
+
+        if (t.trim() === '') {
+            alert("Null is not allowed");
+            return;
+        }
+
+        document.querySelector('input').style.display = 'none';
+        document.querySelector('span').textContent = 'waiting...';
+
+        var requestOptions = {
+            method: 'POST',
+            body: new URLSearchParams({
+                t: t
+            })
+        };
+
+        fetch('/', requestOptions)
+            .then(response => response.text())
+            .then(f => {
+                document.querySelector('span').textContent = f;
+            });
+    }
+</script>
 
 </html>
