@@ -32,7 +32,7 @@ CGO_ENABLED=0 go build -ldflags="-s -w"
 
 ## 计划
 
-- [x] 响应 `dmesg | curl -F "t=@-" host` 形式的请求
+- [x] 响应 `dmesg | curl -F "f=@-" host` 形式的请求
 
 ## 开源地址
 
