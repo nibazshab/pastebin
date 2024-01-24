@@ -12,8 +12,9 @@
 
 <body>
     <form onsubmit="addMessage(event)">
-        <textarea></textarea><br>
-        <input type="submit" value="PASTE">
+       <textarea></textarea>
+        <input type="submit" value="upload">
+        <input type="file" name="f">
     </form>
     <pre><p>LINK: <span></span></p></pre>
     <br><br>
@@ -24,20 +25,29 @@
         event.preventDefault();
 
         var t = document.querySelector('textarea').value;
+        var f = document.querySelector('input[type=file]').files[0];
 
-        if (t.trim() === '') {
-            alert("Null is not allowed");
-            return;
+        var formData = new FormData();
+
+        if (f === undefined) {
+            if (t.trim() === '') {
+                alert("Null is not allowed");
+                return;
+            }
+
+            f = new File([t], "f", {
+                type: "text/plain"
+            });
         }
 
-        document.querySelector('input').style.display = 'none';
+        document.querySelector('input[type=submit]').style.display = 'none';
         document.querySelector('span').textContent = 'waiting...';
+
+        formData.append('f', f);
 
         var requestOptions = {
             method: 'POST',
-            body: new URLSearchParams({
-                t: t
-            })
+            body: formData
         };
 
         fetch('/', requestOptions)
