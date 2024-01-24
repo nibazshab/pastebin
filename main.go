@@ -74,7 +74,7 @@ func main() {
 func randStr() string {
     a := "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
     var s string
-    for i := 0; i < 7; i++ {
+    for i := 0; i < 4; i++ {
         s += string(a[rand.New(rand.NewSource(time.Now().UnixNano())).Intn(len(a))])
     }
     return s
