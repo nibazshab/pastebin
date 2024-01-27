@@ -1,55 +1,47 @@
 <html>
-
 <head>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pastebin</title>
+    <title>pastebin</title>
     <style>
         textarea { width: 100%; height: 150px; padding: 10px; resize: none; }
-
         pre { word-wrap: break-word; white-space: pre-wrap; }
     </style>
 </head>
-
 <body>
-    <form onsubmit="addMessage(event)">
-       <textarea></textarea>
-        <input type="submit" value="upload">
-        <input type="file" name="f">
-    </form>
-    <pre><p>LINK: <span></span></p></pre>
-    <br><br>
-    <pre><p>!!! Data may be erased without notifications</p></pre>
+    <div>
+        <form onsubmit="put(event)">
+            <textarea></textarea>
+            <input type="submit" value="upload">
+            <input type="file" name="f">
+        </form>
+        <pre><p>LINK: <span></span></p></pre>
+        <br><br>
+        <pre><p>Allow Image and Text, size < 5242880b(5Mb)</p></pre>
+        <pre><p>curl Command Options: -F f=@xxx</p></pre>
+    </div>
 </body>
 <script>
-    function addMessage(event) {
+    function put(event) {
         event.preventDefault();
-
         var t = document.querySelector('textarea').value;
         var f = document.querySelector('input[type=file]').files[0];
-
         var formData = new FormData();
-
         if (f === undefined) {
             if (t.trim() === '') {
                 alert("Null is not allowed");
                 return;
             }
-
             f = new File([t], "f", {
                 type: "text/plain"
             });
         }
-
         document.querySelector('input[type=submit]').style.display = 'none';
         document.querySelector('span').textContent = 'waiting...';
-
         formData.append('f', f);
-
         var requestOptions = {
             method: 'POST',
             body: formData
         };
-
         fetch('/', requestOptions)
             .then(response => response.text())
             .then(f => {
@@ -57,5 +49,4 @@
             });
     }
 </script>
-
 </html>
