@@ -71,7 +71,7 @@ func logRecord(r *http.Request, p string) {
     if xff == "" {
         xff = r.RemoteAddr
     }
-    log.Print(xff[:strings.LastIndex(xff, ":")] + " - " + p + " - " + ua)
+    log.Print(xff + " - " + p + " - " + ua)
 }
 
 func handleWeb(w http.ResponseWriter) {
