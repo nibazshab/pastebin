@@ -66,12 +66,11 @@ func handlePost(w http.ResponseWriter, r *http.Request) string {
 }
 
 func logRecord(r *http.Request, p string) {
-    ua := r.Header.Get("user-agent")
     xff := r.Header.Get("X-Forwarded-For")
     if xff == "" {
         xff = r.RemoteAddr
     }
-    log.Print(xff + " - " + p + " - " + ua)
+    log.Print(xff + " - " + p + " - " + r.Header.Get("user-agent"))
 }
 
 func handleWeb(w http.ResponseWriter) {
