@@ -3,21 +3,28 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>pastebin</title>
     <style>
-        textarea { width: 100%; height: 150px; padding: 10px; resize: none; }
-        pre { word-wrap: break-word; white-space: pre-wrap; }
+        div { position: absolute; top: 15px; bottom: 15px; left: 15px; right: 15px; }
+        textarea { width: 100%; height: 55%; padding: 10px; resize: none; margin-bottom: 20px; }
+        footer { position: absolute; bottom: 0px; width: 100%; text-align: center; }
+        article { margin-bottom: 40px; }
+        .right30 { margin-right: 30px; }
+        #sub { width: 90px; height: 30px; }
     </style>
 </head>
 <body>
     <div>
         <form onsubmit="put(event)">
-            <textarea></textarea>
-            <input type="submit" value="upload">
-            <input type="file" name="f">
+            <article>
+                <textarea></textarea>
+                <span class="right30">or</span><input type="file" name="f">
+            </article>
+            <article>
+                <input class="right30" id="sub" type="submit" value="upload"><code><span id="link"></span></code>
+            </article>
         </form>
-        <pre><p>LINK: <span></span></p></pre>
-        <br><br>
-        <pre><p>Allow Image and Text, size < 5242880b(5Mb)</p></pre>
-        <pre><p>curl Command Options: -F f=@xxx</p></pre>
+        <footer>
+            <pre>allow text/image file < 5M, curl api: -X POST -F f=@file.txt</pre>
+        </footer>
     </div>
 </body>
 <script>
@@ -28,15 +35,15 @@
         var formData = new FormData();
         if (f === undefined) {
             if (t.trim() === '') {
-                alert("Null is not allowed");
+                alert("NULL");
                 return;
             }
             f = new File([t], "f", {
                 type: "text/plain"
             });
         }
-        document.querySelector('input[type=submit]').style.display = 'none';
-        document.querySelector('span').textContent = 'waiting...';
+        document.getElementById('sub').disabled = true;
+        document.getElementById('link').textContent = 'waiting...';
         formData.append('f', f);
         var requestOptions = {
             method: 'POST',
@@ -45,7 +52,7 @@
         fetch('/', requestOptions)
             .then(response => response.text())
             .then(f => {
-                document.querySelector('span').textContent = f;
+                document.getElementById('link').textContent = f;
             });
     }
 </script>
