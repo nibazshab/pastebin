@@ -18,6 +18,8 @@ cd pastebin
 CGO_ENABLED=0 go build -ldflags="-s -w"
 ```
 
+测试平台：Linux amd64
+
 ## API
 
 > ___POST /___
@@ -30,9 +32,10 @@ CGO_ENABLED=0 go build -ldflags="-s -w"
 
 返回该链接所对应的文本内容/图片
 
-## 计划
+## PLAN-B
 
 - [x] 响应 `dmesg | curl -F "f=@-" host` 形式的请求
+- [ ] 解决 favicon.ico 的问题
 
 ## 开源地址
 
