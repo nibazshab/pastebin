@@ -51,7 +51,7 @@
         const data_file = document.querySelector('input[type=file]').files[0];
         const data_input = document.querySelector('textarea').value;
 
-        const formData = new FormData();
+        const form_data = new FormData();
 
         if (data_file) {
             upload_file = data_file
@@ -69,14 +69,14 @@
         document.getElementById('sub').disabled = true;
         document.getElementById('link').textContent = 'waiting...';
 
-        formData.append('f', upload_file);
+        form_data.append('f', upload_file);
 
-        const requestOptions = {
+        const request_options = {
             method: 'POST',
-            body: formData
+            body: form_data
         };
 
-        fetch('/', requestOptions)
+        fetch('/', request_options)
             .then(response => response.text())
             .then(back_value => {
                 document.getElementById('link').textContent = back_value;
