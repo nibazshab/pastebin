@@ -5,7 +5,7 @@
     <title>pastebin</title>
     <style>
         body {
-            margin: 15px;
+            margin: 30px 15%;
             font-family: monospace;
         }
 
@@ -23,26 +23,30 @@
         }
 
         #sub {
-            width: 90px;
+            width: 80px;
             height: 30px;
             margin-right: 40px;
+        }
+
+        @media (max-width: 480px) {
+            body {
+                margin: 30px 20px;
+            }
         }
     </style>
 </head>
 
 <body>
+    <h1>PASTEBIN</h1>
     <form onsubmit="put(event)">
         <div>
             <textarea></textarea>
-            <input type="file" name="f">
+            <input type="file">
         </div>
         <div>
-            <input id="sub" type="submit" value="#"><span id="link"></span>
+            <input id="sub" type="submit" value="Enter"><span id="link"></span>
         </div>
     </form>
-
-    <p>text/image &lt 5M</p>
-    <p>-X POST -F f=@file</p>
 </body>
 <script>
     function put(event) {
