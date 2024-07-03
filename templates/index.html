@@ -75,12 +75,10 @@
 
         form_data.append('f', upload_file);
 
-        const request_options = {
+        fetch(window.location.href, {
             method: 'POST',
             body: form_data
-        };
-
-        fetch('/', request_options)
+        })
             .then(response => response.text())
             .then(back_value => {
                 document.getElementById('link').textContent = back_value;
