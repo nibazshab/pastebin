@@ -8,5 +8,5 @@ func main() {
     defer db.Close()
 
     http.HandleFunc("/", route)
-    http.ListenAndServe(":80", nil)
+    http.ListenAndServe(":10002", nil)
 }
