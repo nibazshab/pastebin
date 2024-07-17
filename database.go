@@ -14,7 +14,8 @@ func init() {
     create_table := `
     CREATE TABLE IF NOT EXISTS pastebin_data (
         id VARCHAR(16) PRIMARY KEY,
-        data BLOB
+        data BLOB,
+        mod INTEGER
     );`
 
     db.Exec(create_table)
