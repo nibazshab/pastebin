@@ -1,14 +1,19 @@
 package main
 
 import (
-    "embed"
-    "html/template"
-    "net/http"
+	"embed"
+	"net/http"
 )
 
-//go:embed templates/index.html
+//go:embed assets/*
 var assets embed.FS
 
-func index_page(w http.ResponseWriter) {
-    template.Must(template.ParseFS(assets, "templates/index.html")).Execute(w, nil)
+func index_page(w http.ResponseWriter, index string) {
+	if index == "/" {
+		index = "assets/index.html"
+	} else {
+		index = "assets" + index
+	}
+	data, _ := assets.ReadFile(index)
+	w.Write(data)
 }

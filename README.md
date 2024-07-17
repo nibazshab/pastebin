@@ -37,7 +37,8 @@ body：`f` 文件
 ## PLAN-B
 
 - [x] 响应 `dmesg | curl -F "f=@-" host` 形式的请求
-- [ ] 解决 favicon.ico 的问题
+- [x] 解决 favicon.ico 的问题
+- [ ] 子路径问题
 
 ## 开源地址
 
