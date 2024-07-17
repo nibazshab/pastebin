@@ -10,5 +10,6 @@ func logger(r *http.Request, id string) {
     if ip == "" {
         ip = r.RemoteAddr
     }
+
     log.Print(id + " - " + ip + " - " + r.Header.Get("user-agent"))
 }
