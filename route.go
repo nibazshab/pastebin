@@ -15,6 +15,9 @@ func route(w http.ResponseWriter, r *http.Request) {
             }
         }
     } else {
+        if index == "/favicon.ico" {
+            return
+        } else if index == "/" || index == "/style.css" || index == "/script.js" {
         if index == "/" || index == "/style.css" || index == "/script.js" {
             index_page(w, index)
         } else {
