@@ -22,7 +22,7 @@ CGO_ENABLED=1 go build -ldflags="-s -w"
 
 测试平台：Linux amd64
 
-## API
+__API__
 
 > ___POST /___
 
@@ -39,10 +39,6 @@ body：`f` 文件
 - [x] 响应 `dmesg | curl -F "f=@-" host` 形式的请求
 - [x] 解决 favicon.ico 的问题
 - [x] 变更相对路径为绝对路径
-
-## 开源地址
-
-https://github.com/nibazshab/pastebin
 
 ## 许可证
 
