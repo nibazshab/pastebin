@@ -1,4 +1,4 @@
-module pastebin
+module github.com/nibazshab/pastebin
 
 go 1.22.5
 

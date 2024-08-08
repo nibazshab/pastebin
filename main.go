@@ -1,12 +1,9 @@
 package main
 
 import (
-    "net/http"
+	"github.com/nibazshab/pastebin/cmd"
 )
 
 func main() {
-    defer db.Close()
-
-    http.HandleFunc("/", route)
-    http.ListenAndServe(":10002", nil)
+	cmd.Start()
 }
