@@ -12,9 +12,14 @@ import (
 )
 
 var (
-	re1 = regexp.MustCompile("^(text)/")
-	re2 = regexp.MustCompile("^(image)/")
+	re1 = regexp.MustCompile("^text/")
+	re2 = regexp.MustCompile("^image/")
 )
+
+func WriteDb(idx string, con *[]byte, mod int) {
+	db := db.GetDb()
+	db.Exec("INSERT INTO pastebin_data (id, data, mod) VALUES (?, ?, ?)", idx, *con, mod)
+}
 
 func ConTypeCheck(r *http.Request) bool {
 	return !strings.HasPrefix(r.Header.Get("Content-Type"), "multipart/form-data")
@@ -60,11 +65,9 @@ func HttpPost(w http.ResponseWriter, r *http.Request) string {
 		return ""
 	}
 
-	db := db.GetDb()
-
 	idx := util.RandString(4) + filepath.Ext(file_meta.Filename)
 
-	db.Exec("INSERT INTO pastebin_data (id, data, mod) VALUES (?, ?, ?)", idx, con, mod)
+	WriteDb(idx, &con, mod)
 
 	w.Write([]byte(r.Host + "/" + idx))
 
