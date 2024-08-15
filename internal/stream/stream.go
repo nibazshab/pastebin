@@ -8,23 +8,21 @@ import (
 	"github.com/nibazshab/pastebin/internal/net"
 )
 
-func Stream(w http.ResponseWriter, r *http.Request) {
-	idx := r.URL.Path
+func Stream(w http.ResponseWriter, req *http.Request) {
+	idx := req.URL.Path
 
-	if r.Method == http.MethodPost {
+	if req.Method == http.MethodPost {
 		if idx == "/" {
-
-			idx := net.HttpPost(w, r)
-
+			idx := net.RespPost(w, req)
 			if idx != "" {
-				log.Message(idx, r)
+				log.Message(idx, req)
 			}
 		}
 	} else {
 		if idx == "/" || idx == "/style.css" || idx == "/script.js" {
 			home.HomePage(idx, w)
 		} else {
-			net.HttpGet(w, r)
+			net.RespGet(w, req)
 		}
 	}
 }

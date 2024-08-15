@@ -1,11 +1,7 @@
 package log
 
-import (
-	"path/filepath"
+import "github.com/nibazshab/pastebin/internal/datapath"
 
-	"github.com/nibazshab/pastebin/internal/dir"
-)
-
-func GetLogFile() string {
-	return filepath.Join(dir.Init(), "log.log")
+func getLogPath() string {
+	return datapath.GetDataFile("log.log")
 }

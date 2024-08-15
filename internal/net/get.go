@@ -7,11 +7,11 @@ import (
 	"github.com/nibazshab/pastebin/internal/db"
 )
 
-func HttpGetIdx(r *http.Request) string {
-	return strings.TrimPrefix(r.URL.Path, "/")
+func getIdx(req *http.Request) string {
+	return strings.TrimPrefix(req.URL.Path, "/")
 }
 
-func HttpGetMod(con *[]byte, mod int, w http.ResponseWriter) {
+func respData(con *[]byte, mod int, w http.ResponseWriter) {
 	if mod == 1 {
 		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 	}
@@ -19,18 +19,16 @@ func HttpGetMod(con *[]byte, mod int, w http.ResponseWriter) {
 	w.Write(*con)
 }
 
-func HttpGet(w http.ResponseWriter, r *http.Request) {
-	db := db.GetDb()
+func RespGet(w http.ResponseWriter, req *http.Request) {
+	idx := getIdx(req)
+	con := new([]byte)
+	mod := new(int)
 
-	var con []byte
-	var mod int
-
-	err := db.QueryRow("SELECT data, mod FROM pastebin_data WHERE id = ?", HttpGetIdx(r)).Scan(&con, &mod)
+	err := db.Select(idx, con, mod)
 	if err != nil {
 		w.Write([]byte("404 not found"))
-
 		return
 	}
 
-	HttpGetMod(&con, mod, w)
+	respData(con, *mod, w)
 }

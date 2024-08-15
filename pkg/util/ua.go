@@ -1,9 +1,7 @@
 package util
 
-import (
-	"net/http"
-)
+import "net/http"
 
-func GetUA(r *http.Request) string {
-	return r.Header.Get("user-agent")
+func GetUserUA(req *http.Request) string {
+	return req.Header.Get("user-agent")
 }

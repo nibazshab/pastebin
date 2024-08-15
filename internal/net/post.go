@@ -12,64 +12,43 @@ import (
 )
 
 var (
-	re1 = regexp.MustCompile("^text/")
-	re2 = regexp.MustCompile("^image/")
+	reText  = regexp.MustCompile("^text/")
+	reImage = regexp.MustCompile("^image/")
 )
 
-func WriteDb(idx string, con *[]byte, mod int) {
-	db := db.GetDb()
-	db.Exec("INSERT INTO pastebin_data (id, data, mod) VALUES (?, ?, ?)", idx, *con, mod)
-}
-
-func ConTypeCheck(r *http.Request) bool {
-	return !strings.HasPrefix(r.Header.Get("Content-Type"), "multipart/form-data")
-}
-
-func ConLengthCheck(r *http.Request) bool {
-	return r.ContentLength > 5242880
-}
-
-func HttpPost(w http.ResponseWriter, r *http.Request) string {
-	if ConTypeCheck(r) {
+func RespPost(w http.ResponseWriter, req *http.Request) string {
+	if !strings.HasPrefix(req.Header.Get("Content-Type"), "multipart/form-data") {
 		w.Write([]byte("ERROR: content-type not multipart/form-data"))
-
 		return ""
 	}
 
-	if ConLengthCheck(r) {
+	if req.ContentLength > 5242880 {
 		w.Write([]byte("ERROR: file more than 5mb"))
-
 		return ""
 	}
 
-	file_raw, file_meta, err := r.FormFile("f")
+	file_raw, file_meta, err := req.FormFile("f")
 	if err != nil {
 		w.Write([]byte("ERROR: body name not 'f'"))
-
 		return ""
 	}
-
 	defer file_raw.Close()
 
 	con, _ := io.ReadAll(file_raw)
-
 	var mod int
 
-	if re1.MatchString(http.DetectContentType(con)) {
+	if reText.MatchString(http.DetectContentType(con)) {
 		mod = 1
-	} else if re2.MatchString(http.DetectContentType(con)) {
+	} else if reImage.MatchString(http.DetectContentType(con)) {
 		mod = 0
 	} else {
 		w.Write([]byte("ERROR: file not text or image"))
-
 		return ""
 	}
 
-	idx := util.RandString(4) + filepath.Ext(file_meta.Filename)
+	idx := util.RandIdx(4) + filepath.Ext(file_meta.Filename)
+	db.Insert(idx, &con, mod)
 
-	WriteDb(idx, &con, mod)
-
-	w.Write([]byte(r.Host + "/" + idx))
-
+	w.Write([]byte(req.Host + "/" + idx))
 	return idx
 }

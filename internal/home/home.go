@@ -14,6 +14,5 @@ func HomePage(idx string, w http.ResponseWriter) {
 	}
 
 	data, _ := web.Web.ReadFile(idx)
-
 	w.Write(data)
 }

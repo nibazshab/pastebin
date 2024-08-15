@@ -9,20 +9,14 @@ import (
 
 var db *sql.DB
 
-func SQLCreateTable() string {
-	sql := "CREATE TABLE IF NOT EXISTS pastebin_data (id VARCHAR(16) PRIMARY KEY, data BLOB, mod INTEGER);"
-
-	return sql
-}
-
 func Init() {
-	db, _ = sql.Open("sqlite3", GetDbFile())
+	db, _ = sql.Open("sqlite3", getDbPath())
 
 	if err := db.Ping(); err != nil {
 		log.Fatalf("db connect error: %v", err)
 	}
 
-	db.Exec(SQLCreateTable())
+	db.Exec(initSQL())
 }
 
 func Close() {
@@ -30,8 +24,4 @@ func Close() {
 	if err != nil {
 		log.Fatalf("db close error: %v", err)
 	}
-}
-
-func GetDb() *sql.DB {
-	return db
 }
