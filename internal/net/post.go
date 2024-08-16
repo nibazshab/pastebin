@@ -27,27 +27,37 @@ func RespPost(w http.ResponseWriter, req *http.Request) string {
 		return ""
 	}
 
-	file_raw, file_meta, err := req.FormFile("f")
+	fileRaw, fileMeta, err := req.FormFile("f")
 	if err != nil {
 		w.Write([]byte("ERROR: body name not 'f'"))
 		return ""
 	}
-	defer file_raw.Close()
+	defer fileRaw.Close()
 
-	con, _ := io.ReadAll(file_raw)
-	var mod int
+	fileExt := filepath.Ext(fileMeta.Filename)
+	if len(fileExt) > 12 {
+		w.Write([]byte("ERROR: file extension too long"))
+		return ""
+	}
 
+	con, _ := io.ReadAll(fileRaw)
+	if len(con) > 5242880 {
+		w.Write([]byte("ERROR: file more than 5mb"))
+		return ""
+	}
+
+	var typ bool
 	if reText.MatchString(http.DetectContentType(con)) {
-		mod = 1
+		typ = true
 	} else if reImage.MatchString(http.DetectContentType(con)) {
-		mod = 0
+		typ = false
 	} else {
 		w.Write([]byte("ERROR: file not text or image"))
 		return ""
 	}
 
-	idx := util.RandIdx(4) + filepath.Ext(file_meta.Filename)
-	db.Insert(idx, &con, mod)
+	idx := util.RandIdx(4) + fileExt
+	db.Insert(idx, &con, typ)
 
 	w.Write([]byte(req.Host + "/" + idx))
 	return idx

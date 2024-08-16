@@ -11,8 +11,8 @@ func getIdx(req *http.Request) string {
 	return strings.TrimPrefix(req.URL.Path, "/")
 }
 
-func respData(con *[]byte, mod int, w http.ResponseWriter) {
-	if mod == 1 {
+func respData(con *[]byte, typ bool, w http.ResponseWriter) {
+	if typ {
 		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 	}
 
@@ -22,13 +22,13 @@ func respData(con *[]byte, mod int, w http.ResponseWriter) {
 func RespGet(w http.ResponseWriter, req *http.Request) {
 	idx := getIdx(req)
 	con := new([]byte)
-	mod := new(int)
+	typ := new(bool)
 
-	err := db.Select(idx, con, mod)
+	err := db.Select(idx, con, typ)
 	if err != nil {
 		w.Write([]byte("404 not found"))
 		return
 	}
 
-	respData(con, *mod, w)
+	respData(con, *typ, w)
 }

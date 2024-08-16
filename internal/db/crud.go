@@ -1,9 +1,9 @@
 package db
 
-func Insert(idx string, con *[]byte, mod int) {
-	db.Exec("INSERT INTO pastebin_data (id, data, mod) VALUES (?, ?, ?)", idx, con, mod)
+func Insert(idx string, con *[]byte, typ bool) {
+	db.Exec("INSERT INTO pastebin_data (id, data, type) VALUES (?, ?, ?)", idx, con, typ)
 }
 
-func Select(idx string, con *[]byte, mod *int) error {
-	return db.QueryRow("SELECT data, mod FROM pastebin_data WHERE id = ?", idx).Scan(con, mod)
+func Select(idx string, con *[]byte, typ *bool) error {
+	return db.QueryRow("SELECT data, type FROM pastebin_data WHERE id = ?", idx).Scan(con, typ)
 }
