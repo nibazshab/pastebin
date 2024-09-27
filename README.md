@@ -67,6 +67,7 @@ go build -ldflags="$flags"
 - [x] 解决 favicon.ico 的问题
 - [x] 变更相对路径为绝对路径
 - [x] 自定义端口号
+- [ ] 美化页面
 
 ## 许可证
 
