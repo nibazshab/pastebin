@@ -10,22 +10,21 @@ import (
 )
 
 var (
-	tablePrefix = "pastebin_"
 	dbFile      = getDataFile("database.sqlite")
+	tablePrefix = "pastebin_"
+	db          *gorm.DB
 )
 
-var db *gorm.DB
-
 type Data struct {
-	ID     uint32 `gorm:"primaryKey"`
-	Text   string
-	File   string
-	Size   int64
-	Mime   string
-	Create int64
-	View   int64
-	Count  int `gorm:"default:0"`
-	Type   string
+	ID       uint32 `gorm:"primaryKey"`
+	Text     string
+	FileName string
+	FileMime string
+	Size     int64
+	Create   int64
+	LastView int64
+	Count    int `gorm:"default:0"`
+	Type     string
 }
 
 func dbInit() {
@@ -38,53 +37,36 @@ func dbInit() {
 		Logger: logger.Default.LogMode(logger.Silent),
 	})
 	if err != nil {
-		log.Fatalf("db connect error: %v", err)
+		log.Fatalln("db connect error: ", err)
 	}
 
 	err = db.AutoMigrate(&Data{})
 	if err != nil {
-		log.Fatalf("db init error: %v", err)
+		log.Fatalln("db init error: ", err)
 	}
 }
 
-func dbclose() {
-	dB, _ := db.DB()
-	err := dB.Close()
+func dbClose() {
+	_db, _ := db.DB()
+	err := _db.Close()
 	if err != nil {
-		log.Fatalf("db close error: %v", err)
+		log.Fatalln("db close error: ", err)
 	}
 }
 
-func dbselect(id uint32) *Data {
-	c := Data{ID: id}
-	db.Where(c).First(&c)
-	return &c
+func dbGetDataByID(data *Data) *Data {
+	db.Where(data).First(&data)
+	return data
 }
 
-func upAfterRead(id uint32, count int, view int64) {
-	count++
-	db.Model(&Data{ID: id}).Updates(Data{Count: count, View: view})
+func dbUpdateDataInfo(data *Data) {
+	db.Model(&Data{ID: data.ID}).Updates(data)
 }
 
-func dbinsertText(id uint32, text string, size int64, create int64, types string) {
-	data := &Data{
-		ID:     id,
-		Text:   text,
-		Size:   size,
-		Create: create,
-		Type:   types,
+func dbWriteData(data *Data) bool {
+	err := db.Create(data).Error
+	if err != nil {
+		return false
 	}
-	db.Create(data)
-}
-
-func dbinsertFile(id uint32, file string, size int64, mime string, create int64, types string) {
-	data := &Data{
-		ID:     id,
-		File:   file,
-		Size:   size,
-		Mime:   mime,
-		Create: create,
-		Type:   types,
-	}
-	db.Create(data)
+	return true
 }

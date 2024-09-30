@@ -4,6 +4,8 @@ import (
 	"embed"
 	"io"
 	"io/fs"
+	"log"
+	"mime/multipart"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -14,109 +16,165 @@ import (
 	"pastebin/util"
 )
 
-var pubDir = getDataFile("attachments")
+var (
+	attachmentDir = getDataFile("attachments")
+	pathIdNum     = 4
 
-//go:embed all:dist
-var web embed.FS
+	//go:embed all:dist
+	web embed.FS
+)
 
-func handleGet(c *gin.Context) {
-	tid := c.Param("id")
-	id := convHashId(tid)
-	data := dbselect(id)
+func handleReqData(c *gin.Context) {
+	reqPathId := c.Param("id")
+	dbHashId := convHashId(reqPathId)
 
-	if data.Type != "" {
-		switch data.Type {
+	dataSelectId := &Data{
+		ID: dbHashId,
+	}
+	reqData := dbGetDataByID(dataSelectId)
+
+	if reqData.Type != "" {
+		switch reqData.Type {
 		case "text":
-			c.Data(http.StatusOK, "text/plain; charset=utf-8", []byte(data.Text))
+			c.Data(http.StatusOK, "text/plain; charset=utf-8", []byte(reqData.Text))
+
 		case "file":
-			pubfiledir := filepath.Join(pubDir, tid)
-			file, err := os.Open(filepath.Join(pubfiledir, data.File))
+			attachmentFileDir := filepath.Join(attachmentDir, reqPathId)
+			fileObj, err := os.Open(filepath.Join(attachmentFileDir, reqData.FileName))
 			if err != nil {
 				c.Status(http.StatusNotFound)
 				return
 			}
-			defer file.Close()
+			defer func(fileObj *os.File) {
+				_ = fileObj.Close()
+			}(fileObj)
 
-			c.Writer.Header().Set("Content-Type", data.Mime)
+			c.Writer.Header().Set("Content-Type", reqData.FileMime)
 			c.Status(http.StatusOK)
-			io.Copy(c.Writer, file)
+			_, _ = io.Copy(c.Writer, fileObj)
 		}
-		viewTime := getUnixTime()
-		upAfterRead(id, data.Count, viewTime)
+
+		infoData := &Data{
+			ID:       dbHashId,
+			Count:    reqData.Count + 1,
+			LastView: getUnixTime(),
+		}
+		dbUpdateDataInfo(infoData)
 	} else {
 		c.Status(http.StatusNotFound)
 	}
 }
 
-func handlePost(c *gin.Context) string {
+func handleUploadData(c *gin.Context) (string, bool) {
 	if !conTypeCheck(c) {
 		c.String(http.StatusBadRequest, "ERROR: content-type not multipart/form-data")
-		return ""
+		return "", false
 	}
 
-	size := c.Request.ContentLength
-	if size > 104857600 {
+	bodySize := c.Request.ContentLength
+	if bodySize > 104857600 {
 		c.String(http.StatusBadRequest, "ERROR: be less than 100mb")
-		return ""
+		return "", false
 	}
 
-	formFile, err := c.FormFile("f")
+	bodyObj, err := c.FormFile("f")
 	if err != nil {
 		c.String(http.StatusBadRequest, "ERROR: need name f")
-		return ""
+		return "", false
 	}
 
-	file, _ := formFile.Open()
-	defer file.Close()
+	fileBody, _ := bodyObj.Open()
+	defer func(fileObj multipart.File) {
+		_ = fileObj.Close()
+	}(fileBody)
 
 	buf := make([]byte, 512)
-	n, _ := file.Read(buf)
+	num, _ := fileBody.Read(buf)
 
-	var data Data
-	tid := util.RandStr(4)
-	data.ID = convHashId(tid)
-	data.Size = size
-	data.Create = getUnixTime()
-	data.Mime = http.DetectContentType(buf[:n])
+	respPathId := util.RandStr(pathIdNum)
+	fileMime := http.DetectContentType(buf[:num])
 
-	file.Seek(0, 0)
-	if strings.HasPrefix(data.Mime, "text") {
-		tmptext, _ := io.ReadAll(file)
-		data.Text = string(tmptext)
-		data.Type = "text"
-		dbinsertText(data.ID, data.Text, data.Size, data.Create, data.Type)
+	_, _ = fileBody.Seek(0, 0)
+	if strings.HasPrefix(fileMime, "text") {
+		fileText, _ := io.ReadAll(fileBody)
+
+		textData := &Data{
+			Text:   string(fileText),
+			Size:   bodySize,
+			Create: getUnixTime(),
+			Type:   "text",
+		}
+		respPathId = writeData(textData, respPathId)
 	} else {
-		pubfiledir := filepath.Join(pubDir, tid)
-		os.MkdirAll(pubfiledir, 0o755)
-		filename := filepath.Base(formFile.Filename)
-		filebody, _ := os.Create(filepath.Join(pubfiledir, filename))
-		defer filebody.Close()
-		io.Copy(filebody, file)
+		fileName := filepath.Base(bodyObj.Filename)
 
-		data.Type = "file"
-		data.File = filename
-		data.Size = size
-		dbinsertFile(data.ID, data.File, data.Size, data.Mime, data.Create, data.Type)
+		fileData := &Data{
+			FileName: fileName,
+			FileMime: fileMime,
+			Size:     bodySize,
+			Create:   getUnixTime(),
+			Type:     "file",
+		}
+		respPathId = writeData(fileData, respPathId)
+
+		attachmentFileDir := filepath.Join(attachmentDir, respPathId)
+		_ = os.MkdirAll(attachmentFileDir, 0o755)
+		fileObj, _ := os.Create(filepath.Join(attachmentFileDir, fileName))
+		defer func(filebody *os.File) {
+			_ = filebody.Close()
+		}(fileObj)
+
+		_, _ = io.Copy(fileObj, fileBody)
 	}
-	c.String(http.StatusOK, c.Request.Host+"/"+tid)
-	return tid
+	c.String(http.StatusOK, c.Request.Host+"/"+respPathId)
+	return respPathId, true
 }
 
-func indexpage(c *gin.Context) {
+func writeData(data *Data, pathId string) string {
+	i := 1
+	for {
+		data.ID = convHashId(pathId)
+		is := dbWriteData(data)
+		if is {
+			break
+		} else {
+			if i < 10 {
+				i++
+				pathId = util.RandStr(pathIdNum)
+			} else {
+				i = 1
+				pathIdNum++
+				pathId = util.RandStr(pathIdNum)
+			}
+		}
+	}
+	return pathId
+}
+
+func attachmentInit() {
+	fileInfo, err := os.Stat(attachmentDir)
+	if err != nil {
+		if os.IsNotExist(err) {
+			_ = os.MkdirAll(attachmentDir, 0o755)
+		} else {
+			log.Fatalln("attachments init error")
+		}
+	} else {
+		if !fileInfo.IsDir() {
+			log.Fatalln("attachments init error")
+		}
+	}
+}
+
+func indexPage(c *gin.Context) {
 	c.FileFromFS("dist/", http.FS(web))
 }
 
-func static(g *gin.RouterGroup) {
+func publicFile(g *gin.RouterGroup) {
 	public, _ := fs.Sub(web, "dist/assets")
 	g.StaticFS("/", http.FS(public))
 }
 
 func conTypeCheck(c *gin.Context) bool {
 	return strings.HasPrefix(c.Request.Header.Get("Content-Type"), "multipart/form-data")
-}
-
-func attachmentsInit() {
-	if _, err := os.Stat(pubDir); os.IsNotExist(err) {
-		os.MkdirAll(pubDir, 0o755)
-	}
 }

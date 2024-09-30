@@ -11,9 +11,10 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-var _port = "10002"
-
-var port *string
+var (
+	port  *string
+	_port = "10002"
+)
 
 func init() {
 	port = flag.String("port", _port, "server port")
@@ -21,14 +22,14 @@ func init() {
 
 	dbInit()
 	logInit()
-	attachmentsInit()
+	attachmentInit()
 }
 
 func main() {
 	ch := make(chan os.Signal, 1)
 	signal.Notify(ch, syscall.SIGINT, syscall.SIGTERM)
 
-	defer dbclose()
+	defer dbClose()
 
 	gin.SetMode(gin.ReleaseMode)
 	r := gin.New()
@@ -36,25 +37,26 @@ func main() {
 	g := r.Group("/assets")
 	{
 		g.Use(cacheControl)
-		static(g)
+		publicFile(g)
 	}
 
 	r.GET("/favicon.ico", cacheControl, func(c *gin.Context) {
 		c.Data(http.StatusOK, "image/x-icon", []byte{})
 	})
 
-	r.GET("/", cacheControl, indexpage)
-	r.GET("/:id", handleGet)
+	r.GET("/", cacheControl, indexPage)
+	r.GET("/:id", handleReqData)
+
 	r.POST("/", func(c *gin.Context) {
-		id := handlePost(c)
-		if id != "" {
-			logging(c, id)
+		pathId, is := handleUploadData(c)
+		if is {
+			logWrite(c, pathId)
 		}
 	})
 
 	go func() {
 		if err := r.Run(":" + *port); err != nil {
-			log.Fatalf("start error: %v", err)
+			log.Fatalln("start error: ", err)
 		}
 	}()
 

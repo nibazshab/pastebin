@@ -13,18 +13,22 @@ import (
 var logFile = getDataFile("log.log")
 
 func logInit() {
-	f, err := os.OpenFile(logFile, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0o644)
+	logObj, err := os.OpenFile(logFile, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0o644)
 	if err != nil {
-		log.Fatalf("log open error: %v", err)
+		log.Fatalln("log open error: ", err)
 	}
-	defer f.Close()
+	defer func(logObj *os.File) {
+		_ = logObj.Close()
+	}(logObj)
 }
 
-func logging(c *gin.Context, id string) {
-	f, _ := os.OpenFile(logFile, os.O_APPEND|os.O_WRONLY, 0o644)
-	defer f.Close()
+func logWrite(c *gin.Context, pathId string) {
+	logObj, _ := os.OpenFile(logFile, os.O_APPEND|os.O_WRONLY, 0o644)
+	defer func(logObj *os.File) {
+		_ = logObj.Close()
+	}(logObj)
 
-	multiWriter := io.MultiWriter(os.Stdout, f)
+	multiWriter := io.MultiWriter(os.Stdout, logObj)
 	log.SetOutput(multiWriter)
-	log.Print(id + " | " + util.GetUserIP(c.Request) + " | " + util.GetUserUA(c.Request))
+	log.Print(pathId + " | " + util.GetUserIP(c.Request) + " | " + util.GetUserUA(c.Request))
 }

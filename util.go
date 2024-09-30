@@ -15,15 +15,12 @@ func getDataFile(file string) string {
 		dataPath = filepath.Join(filepath.Dir(ex), "pastebin_data")
 
 		if _, err := os.Stat(dataPath); os.IsNotExist(err) {
-			err := os.MkdirAll(dataPath, 0o755)
-			if err != nil {
-				return ""
-			}
+			_ = os.MkdirAll(dataPath, 0o755)
 		}
 	}
 
-	datafile := filepath.Join(dataPath, file)
-	return datafile
+	dataFile := filepath.Join(dataPath, file)
+	return dataFile
 }
 
 func getUnixTime() int64 {
@@ -32,6 +29,6 @@ func getUnixTime() int64 {
 
 func convHashId(s string) uint32 {
 	h := fnv.New32a()
-	h.Write([]byte(s))
+	_, _ = h.Write([]byte(s))
 	return h.Sum32()
 }

@@ -5,6 +5,11 @@ function put(event) {
     const form_data = new FormData();
 
     if (data_file) {
+        if (data_file.size > 104857600){
+            document.getElementById('sub').disabled = true;
+            document.getElementById('link').textContent = 'ERROR: must < 100mb';
+            return;
+        }
         upload_file = data_file
     } else {
         if (data_input.trim() === '') {
