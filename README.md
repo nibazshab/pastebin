@@ -48,7 +48,7 @@ wget -O- "$musl" | tar -zxvf - --strip-components=1 -C /usr/local
 ```sh
 go get ./...
 
-flags="-s -w --extldflags '-static -fpic'"
+flags="-s -w --extldflags '-static'"
 export GOOS=linux
 export GOARCH=amd64
 export CC=x86_64-linux-musl-gcc

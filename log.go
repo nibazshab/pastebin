@@ -30,5 +30,5 @@ func logWrite(c *gin.Context, pathId string) {
 
 	multiWriter := io.MultiWriter(os.Stdout, logObj)
 	log.SetOutput(multiWriter)
-	log.Print(pathId + " | " + util.GetUserIP(c.Request) + " | " + util.GetUserUA(c.Request))
+	log.Printf("%s | %s | %s", pathId, util.GetUserIP(c.Request), util.GetUserUA(c.Request))
 }

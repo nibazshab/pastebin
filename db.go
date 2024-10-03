@@ -9,11 +9,9 @@ import (
 	"gorm.io/gorm/schema"
 )
 
-var (
-	dbFile      = getDataFile("database.sqlite")
-	tablePrefix = "pastebin_"
-	db          *gorm.DB
-)
+const tablePrefix = "pastebin_"
+
+var db *gorm.DB
 
 type Data struct {
 	ID       uint32 `gorm:"primaryKey"`
@@ -29,6 +27,7 @@ type Data struct {
 
 func dbInit() {
 	var err error
+	dbFile := getDataFile("database.sqlite")
 
 	db, err = gorm.Open(sqlite.Open(dbFile+"?_journal=WAL&_vacuum=incremental"), &gorm.Config{
 		NamingStrategy: schema.NamingStrategy{
@@ -55,7 +54,7 @@ func dbClose() {
 }
 
 func dbGetDataByID(data *Data) *Data {
-	db.Where(data).First(&data)
+	db.Where(data).First(data)
 	return data
 }
 

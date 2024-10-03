@@ -12,6 +12,7 @@ var dataPath string
 func getDataFile(file string) string {
 	if dataPath == "" {
 		ex, _ := os.Executable()
+
 		dataPath = filepath.Join(filepath.Dir(ex), "pastebin_data")
 
 		if _, err := os.Stat(dataPath); os.IsNotExist(err) {

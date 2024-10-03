@@ -2,6 +2,7 @@ package main
 
 import (
 	"embed"
+	"fmt"
 	"io"
 	"io/fs"
 	"log"
@@ -17,8 +18,8 @@ import (
 )
 
 var (
-	attachmentDir = getDataFile("attachments")
 	pathIdNum     = 4
+	attachmentDir = getDataFile("attachments")
 
 	//go:embed all:dist
 	web embed.FS
@@ -71,11 +72,13 @@ func handleUploadData(c *gin.Context) (string, bool) {
 		return "", false
 	}
 
+	const maxBodySize = 100 * 1024 * 1024
 	bodySize := c.Request.ContentLength
-	if bodySize > 104857600 {
+	if bodySize > maxBodySize {
 		c.String(http.StatusBadRequest, "ERROR: be less than 100mb")
 		return "", false
 	}
+	c.Request.Body = http.MaxBytesReader(c.Writer, c.Request.Body, maxBodySize)
 
 	bodyObj, err := c.FormFile("f")
 	if err != nil {
@@ -88,12 +91,11 @@ func handleUploadData(c *gin.Context) (string, bool) {
 		_ = fileObj.Close()
 	}(fileBody)
 
+	respPathId := util.RandStr(pathIdNum)
+
 	buf := make([]byte, 512)
 	num, _ := fileBody.Read(buf)
-
-	respPathId := util.RandStr(pathIdNum)
 	fileMime := http.DetectContentType(buf[:num])
-
 	_, _ = fileBody.Seek(0, 0)
 	if strings.HasPrefix(fileMime, "text") {
 		fileText, _ := io.ReadAll(fileBody)
@@ -126,7 +128,8 @@ func handleUploadData(c *gin.Context) (string, bool) {
 
 		_, _ = io.Copy(fileObj, fileBody)
 	}
-	c.String(http.StatusOK, c.Request.Host+"/"+respPathId)
+
+	c.String(http.StatusOK, fmt.Sprintf("%s/%s", c.Request.Host, respPathId))
 	return respPathId, true
 }
 

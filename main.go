@@ -11,10 +11,9 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-var (
-	port  *string
-	_port = "10002"
-)
+const _port = "10002"
+
+var port *string
 
 func init() {
 	port = flag.String("port", _port, "server port")
