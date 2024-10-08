@@ -4,7 +4,6 @@ import (
 	"embed"
 	"fmt"
 	"io"
-	"io/fs"
 	"log"
 	"mime/multipart"
 	"net/http"
@@ -173,10 +172,10 @@ func indexPage(c *gin.Context) {
 	c.FileFromFS("dist/", http.FS(web))
 }
 
-func publicFile(g *gin.RouterGroup) {
-	public, _ := fs.Sub(web, "dist/assets")
-	g.StaticFS("/", http.FS(public))
-}
+//func publicFile(g *gin.RouterGroup) {
+//	public, _ := fs.Sub(web, "dist/assets")
+//	g.StaticFS("/", http.FS(public))
+//}
 
 func conTypeCheck(c *gin.Context) bool {
 	return strings.HasPrefix(c.Request.Header.Get("Content-Type"), "multipart/form-data")

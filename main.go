@@ -33,11 +33,11 @@ func main() {
 	gin.SetMode(gin.ReleaseMode)
 	r := gin.New()
 
-	g := r.Group("/assets")
-	{
-		g.Use(cacheControl)
-		publicFile(g)
-	}
+	//g := r.Group("/assets")
+	//{
+	//	g.Use(cacheControl)
+	//	publicFile(g)
+	//}
 
 	r.GET("/favicon.ico", cacheControl, func(c *gin.Context) {
 		c.Data(http.StatusOK, "image/x-icon", []byte{})

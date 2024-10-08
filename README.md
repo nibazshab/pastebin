@@ -46,7 +46,7 @@ wget -O- "$musl" | tar -zxvf - --strip-components=1 -C /usr/local
 开始构建
 
 ```sh
-go get ./...
+go mod tidy
 
 flags="-s -w --extldflags '-static'"
 export GOOS=linux
@@ -63,7 +63,7 @@ go build -ldflags="$flags"
 - [x] 解决 favicon.ico 的问题
 - [x] 变更相对路径为绝对路径
 - [x] 自定义端口号
-- [ ] 美化页面，重写糟糕的 js
+- [x] 美化页面，重写糟糕的 js
 
 ## 许可证
 
