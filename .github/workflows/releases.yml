@@ -33,26 +33,26 @@ jobs:
         go-version-file: go.mod
 
     - name: Go
-      run: |
-        go mod tidy
+      run: go mod tidy
 
     - name: Build
       env:
         CGO_ENABLED: 1
         GOOS: linux
         GOARCH: amd64
-        CC: "~/bin/x86_64-linux-musl-gcc"
-        FLAG: "-s -w --extldflags '-static'"
-      run: CGO_ENABLED=$(CGO_ENABLED) GOOS=$(GOOS) GOARCH=$(GOARCH) CC=$(CC) go build -ldflags=$(FLAG)
+      run: |
+        flags="-s -w --extldflags '-static'"
+        export CC="$HOME/.musl-gcc/bin/x86_64-linux-musl-gcc"
+        go build -ldflags="$flags"
 
     - name: Package
       run: |
-        mkdir dist
-        tar -czvf dist/pastebin-linux-amd64.tar.gz pastebin
+        mkdir .dist
+        tar -czvf .dist/pastebin-linux-amd64.tar.gz pastebin
 
     - name: Upload Release
       uses: softprops/action-gh-release@v2
       env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        files: dist/*
+        files: .dist/*
