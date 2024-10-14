@@ -6,8 +6,6 @@ import (
 	"os"
 
 	"github.com/gin-gonic/gin"
-
-	"pastebin/util"
 )
 
 var logFile = getDataFile("log.log")
@@ -30,5 +28,5 @@ func logWrite(c *gin.Context, pathId string) {
 
 	multiWriter := io.MultiWriter(os.Stdout, logObj)
 	log.SetOutput(multiWriter)
-	log.Printf("%s | %s | %s", pathId, util.GetUserIP(c.Request), util.GetUserUA(c.Request))
+	log.Printf("%s | %s | %s", pathId, GetUserIP(c.Request), GetUserUA(c.Request))
 }

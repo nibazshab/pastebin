@@ -53,6 +53,8 @@ func main() {
 		}
 	})
 
+	log.Printf("start HTTP server @ 0.0.0.0:%s\n", *port)
+
 	go func() {
 		if err := r.Run(":" + *port); err != nil {
 			log.Fatalln("start error: ", err)

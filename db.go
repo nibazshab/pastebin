@@ -64,8 +64,5 @@ func dbUpdateDataInfo(data *Data) {
 
 func dbWriteData(data *Data) bool {
 	err := db.Create(data).Error
-	if err != nil {
-		return false
-	}
-	return true
+	return err == nil
 }

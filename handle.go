@@ -12,8 +12,6 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
-
-	"pastebin/util"
 )
 
 var (
@@ -90,7 +88,7 @@ func handleUploadData(c *gin.Context) (string, bool) {
 		_ = fileObj.Close()
 	}(fileBody)
 
-	respPathId := util.RandStr(pathIdNum)
+	respPathId := RandStr(pathIdNum)
 
 	buf := make([]byte, 512)
 	num, _ := fileBody.Read(buf)
@@ -142,11 +140,11 @@ func writeData(data *Data, pathId string) string {
 		} else {
 			if i < 10 {
 				i++
-				pathId = util.RandStr(pathIdNum)
+				pathId = RandStr(pathIdNum)
 			} else {
 				i = 1
 				pathIdNum++
-				pathId = util.RandStr(pathIdNum)
+				pathId = RandStr(pathIdNum)
 			}
 		}
 	}
