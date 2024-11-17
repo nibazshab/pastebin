@@ -1,0 +1,164 @@
+<!doctype html>
+<html>
+
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>pastebin</title>
+    <style>
+        body {
+            font-family: monospace;
+            margin: 40px 20%;
+        }
+
+        h1 {
+            margin-bottom: 50px;
+        }
+
+        #text-input {
+            margin-bottom: 30px;
+            width: 100%;
+            height: 250px;
+            resize: none;
+            padding: 10px;
+            box-sizing: border-box;
+            outline: none;
+            border-radius: 10px;
+            border: #4f5359 2px dotted;
+        }
+
+        #text-input:focus {
+            border: #4f5359 2px solid;
+        }
+
+        #select-file-button {
+            font-size: small;
+            border: #4f5359 2px dotted;
+            border-radius: 10px;
+            padding: 12px 20px;
+            min-width: 250px;
+            cursor: pointer;
+        }
+
+        #file-input {
+            display: none;
+        }
+
+        #save-input {
+            padding: 12px 40px;
+            cursor: pointer;
+            float: right;
+            border-radius: 10px;
+            border: none;
+            background-color: #000;
+            color: #fff;
+            font-size: large;
+        }
+
+        #file-upload-area {
+            margin-bottom: 30px;
+        }
+
+        #link {
+            height: 20px;
+            text-align: center;
+        }
+
+        @media (max-width: 480px) {
+            body {
+                margin: 20px 15px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+<h1>pastebin</h1>
+<form id="upload-form">
+    <textarea id="text-input" placeholder="write here"></textarea>
+    <div id="file-upload-area">
+        <label for="file-input" id="select-file-button">
+            <a role="button">Select or drop a attachment</a>
+        </label>
+        <input type="file" id="file-input" name="file"/>
+    </div>
+    <p id="link"></p>
+    <button id="save-input">Save</button>
+</form>
+</body>
+<script>
+    const dropContainer = document.getElementById('upload-form');
+    const selectFileButton = document.getElementById('select-file-button');
+    const fileInput = document.getElementById('file-input');
+    const textInput = document.getElementById('text-input');
+    const saveButton = document.getElementById('save-input');
+    const linkElement = document.getElementById('link');
+
+    fileInput.addEventListener('change', () => {
+        if (fileInput.files[0]) {
+            selectFileButton.textContent = "Attached: " + fileInput.files[0].name;
+        } else {
+            selectFileButton.textContent = "Select or drop a attachment";
+        }
+    });
+
+    dropContainer.addEventListener('dragover', (event) => {
+        event.preventDefault();
+    });
+
+    dropContainer.addEventListener('drop', (event) => {
+        event.preventDefault();
+        const dataTransfer = new DataTransfer();
+        dataTransfer.items.add(event.dataTransfer.files[0]);
+        fileInput.files = dataTransfer.files;
+        selectFileButton.textContent = "Attached: " + fileInput.files[0].name;
+    });
+
+    const uploadForm = document.getElementById('upload-form');
+    uploadForm.addEventListener('submit', async (event) => {
+        event.preventDefault();
+
+        const file = fileInput.files[0];
+        const text = textInput.value;
+        const formData = new FormData();
+
+        let uploadFile;
+        let uploadType;
+        if (file) {
+            if (file.size > 104857600) {
+                selectFileButton.style.borderColor = '#f00';
+                selectFileButton.style.color = '#f00';
+                selectFileButton.textContent = "The attachment need less than 100 mb";
+                return;
+            }
+            uploadFile = file;
+            uploadType = "file";
+        } else {
+            if (text.trim() === '') {
+                textInput.focus();
+                return;
+            }
+            uploadFile = new File([text], "f", {type: "text/plain"});
+            uploadType = "text";
+        }
+
+        saveButton.disabled = true;
+        saveButton.style.backgroundColor = "#d0d0d0";
+
+        linkElement.textContent = 'saving...';
+
+        try {
+            formData.append('f', uploadFile);
+            const response = await fetch(window.location.href + "?type=" + uploadType, {
+                method: 'POST',
+                body: formData
+            });
+
+            linkElement.textContent = await response.text();
+        } catch (error) {
+            console.error("Error:", error);
+            linkElement.textContent = "Error saving.";
+        }
+    });
+</script>
+
+</html>
