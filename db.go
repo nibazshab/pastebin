@@ -22,6 +22,7 @@ type Data struct {
 	LastView int64
 	Count    int `gorm:"default:0"`
 	Type     string
+	Preview  bool
 }
 
 func dbInit() {

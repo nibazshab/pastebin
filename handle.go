@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -32,11 +33,9 @@ func handleReqData(c *gin.Context) {
 	reqData := dbGetDataByID(dataSelectId)
 
 	if reqData.Type != "" {
-		switch reqData.Type {
-		case "text":
+		if reqData.Type == "text" {
 			c.Data(http.StatusOK, "text/plain; charset=utf-8", []byte(reqData.Text))
-
-		case "file":
+		} else {
 			attachmentFileDir := filepath.Join(attachmentDir, reqPathId)
 			fileObj, err := os.Open(filepath.Join(attachmentFileDir, reqData.FileName))
 			if err != nil {
@@ -47,7 +46,10 @@ func handleReqData(c *gin.Context) {
 				_ = fileObj.Close()
 			}(fileObj)
 
-			c.Writer.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s\"", reqData.FileName))
+			if reqData.Preview == false {
+				c.Writer.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s\"", reqData.FileName))
+			}
+
 			c.Status(http.StatusOK)
 			_, _ = io.Copy(c.Writer, fileObj)
 		}
@@ -67,13 +69,6 @@ func handleUploadData(c *gin.Context) (string, bool) {
 	// check con-type
 	if !conTypeCheck(c) {
 		c.String(http.StatusBadRequest, "ERROR: content-type not multipart/form-data")
-		return "", false
-	}
-
-	// check file-type
-	fileType := c.Query("type")
-	if fileType != "file" && fileType != "text" && fileType != "" {
-		c.String(http.StatusBadRequest, "ERROR: type not file or text")
 		return "", false
 	}
 
@@ -101,16 +96,37 @@ func handleUploadData(c *gin.Context) (string, bool) {
 	// set file-id
 	respPathId := RandStr(pathIdNum)
 
-	// if not set file-type, and check text is real
+	// set file-type
+	fileType := c.PostForm("t")
 	if fileType == "" || fileType == "text" {
 		buf := make([]byte, 512)
 		num, _ := fileBody.Read(buf)
 		fileMime := http.DetectContentType(buf[:num])
 		_, _ = fileBody.Seek(0, 0)
+
 		if strings.HasPrefix(fileMime, "text") {
 			fileType = "text"
 		} else {
 			fileType = "file"
+		}
+	}
+
+	// set preview
+	fileView, _ := strconv.ParseBool(c.PostForm("v"))
+	if fileView {
+		buf := make([]byte, 512)
+		num, _ := fileBody.Read(buf)
+		fileMime := http.DetectContentType(buf[:num])
+		_, _ = fileBody.Seek(0, 0)
+
+		if strings.HasPrefix(fileMime, "text") {
+			fileView = true
+		} else {
+			if strings.HasPrefix(fileMime, "image") {
+				fileView = true
+			} else {
+				fileView = false
+			}
 		}
 	}
 
@@ -119,10 +135,11 @@ func handleUploadData(c *gin.Context) (string, bool) {
 		fileText, _ := io.ReadAll(fileBody)
 
 		textData := &Data{
-			Text:   string(fileText),
-			Size:   fileSize,
-			Create: getUnixTime(),
-			Type:   fileType,
+			Text:    string(fileText),
+			Size:    fileSize,
+			Create:  getUnixTime(),
+			Type:    fileType,
+			Preview: fileView,
 		}
 		respPathId = writeData(textData, respPathId)
 	} else { // file
@@ -133,6 +150,7 @@ func handleUploadData(c *gin.Context) (string, bool) {
 			Size:     fileSize,
 			Create:   getUnixTime(),
 			Type:     fileType,
+			Preview:  fileView,
 		}
 		respPathId = writeData(fileData, respPathId)
 

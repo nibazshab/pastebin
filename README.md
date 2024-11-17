@@ -25,9 +25,9 @@
 
 - ___POST /___
 
-请求：multipart/form-data，（可选）加上 `?type=` 指定上传类型为 `file` 或 `text`，返回存储了数据内容的链接
+请求：multipart/form-data，返回存储了数据内容的链接
 
-body：`f` 文件
+body：`f=@文件` 上传的文件，（可选）`t=text/file` 文件类型，（可选）`v=true/false` 是否可预览
 
 - ___GET /{uid}___
 
@@ -96,8 +96,8 @@ WantedBy=multi-user.target
 - [x] 自定义端口号
 - [x] 美化页面，重写糟糕的 js
 - [x] 修复 xlsx, word 等被检测为 zip 类型的问题（直接返回原始文件名）
+- [x] ctrl v 上传图片
 - [ ] 支持绝对路径的数据目录
-- [ ] ctrl v 上传图片
 
 ## 许可证
 
