@@ -98,7 +98,7 @@ func handleUploadData(c *gin.Context) (string, bool) {
 
 	// set file-type
 	fileType := c.PostForm("t")
-	if fileType == "" || fileType == "text" {
+	if fileType != "file" {
 		buf := make([]byte, 512)
 		num, _ := fileBody.Read(buf)
 		fileMime := http.DetectContentType(buf[:num])
