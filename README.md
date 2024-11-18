@@ -57,37 +57,6 @@ export CGO_ENABLED=1
 go build -ldflags="$flags"
 ```
 
-## 打包软件包
-
-PKGBUILD
-
-```sh
-pkgname=pastebin
-pkgver=
-pkgrel=1
-arch=('x86_64')
-source=("$pkgname" "$pkgname.service")
-sha256sums=('SKIP' 'SKIP')
-package() {
-  mkdir -p $pkgdir/usr/local/$pkgname
-  cp $pkgname $pkgdir/usr/local/$pkgname
-  mkdir -p $pkgdir/usr/lib/systemd/system
-  cp $pkgname.service $pkgdir/usr/lib/systemd/system
-}
-```
-
-pastebin.service
-
-```ini
-[Unit]
-Description=pastebin service
-[Service]
-ExecStart=/usr/local/pastebin/pastebin
-Restart=on-failure
-[Install]
-WantedBy=multi-user.target
-```
-
 ## PLAN-B
 
 - [x] 响应 `dmesg | curl -F "f=@-" host` 形式的请求

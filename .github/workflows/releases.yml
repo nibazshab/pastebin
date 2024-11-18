@@ -51,6 +51,14 @@ jobs:
         mkdir .dist
         tar -czvf .dist/pastebin-linux-amd64.tar.gz pastebin
 
+    - name: Package Arch Linux
+      run: |
+        V=$(git describe --abbrev=0 --tags)
+        sed -i s/pkgver=/pkgver=$V/ .github/pkg/PKGBUILD
+        mv pastebin .github/pkg
+        docker build --output=. .github/pkg
+        mv pastebin-$V-*.pkg.tar.zst .dist/
+
     - name: Upload Release
       uses: softprops/action-gh-release@v2
       env:
