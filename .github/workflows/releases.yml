@@ -7,44 +7,21 @@ on:
 
 permissions:
   contents: write
-  
+
 jobs:
 
   build:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
-
-    - name: Cache
-      uses: actions/cache@v4
-      with:
-        path: ~/.musl-gcc
-        key: ${{ runner.os }}-musl-
-        restore-keys: ${{ runner.os }}-musl-
-
-    - name: Musl
-      run: |
-        mkdir -p ~/.musl-gcc
-        wget -O musl-gcc.tgz https://musl.cc/x86_64-linux-musl-cross.tgz
-        tar -zxvf musl-gcc.tgz --strip-components=1 -C ~/.musl-gcc
-
     - uses: actions/setup-go@v5
       with:
         go-version-file: go.mod
 
-    - name: Go
-      run: go mod tidy
-
     - name: Build
-      env:
-        GOOS: linux
-        GOARCH: amd64
-        CGO_ENABLED: 1
       run: |
-        flags="-s -w --extldflags '-static' \
-         -X main.version=$(git describe --abbrev=0 --tags)"
-        export CC="$HOME/.musl-gcc/bin/x86_64-linux-musl-gcc"
-        go build -ldflags="$flags"
+        mv .github/build/Makefile .
+        make
 
     - name: Package
       run: |

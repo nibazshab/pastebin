@@ -33,30 +33,6 @@ body：`f=@文件` 上传的文件，（可选）`t=text/file` 文件类型，�
 
 返回该链接所对应的内容
 
-## 构建说明
-
-所需软件包：go, musl
-
-go 使用包管理器或任意方式安装，musl 可以通过如下命令安装
-
-```sh
-wget -O musl.tgz https://musl.cc/x86_64-linux-musl-cross.tgz
-tar -zxvf musl.tgz --strip-components=1 -C /usr/local
-```
-
-开始构建
-
-```sh
-go mod tidy
-flags="-s -w --extldflags '-static' \
- -X main.version=$(git describe --abbrev=0 --tags)"
-export CC=x86_64-linux-musl-gcc
-export GOOS=linux
-export GOARCH=amd64
-export CGO_ENABLED=1
-go build -ldflags="$flags"
-```
-
 ## PLAN-B
 
 - [x] 响应 `dmesg | curl -F "f=@-" host` 形式的请求
