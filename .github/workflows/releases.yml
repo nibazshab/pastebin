@@ -18,26 +18,23 @@ jobs:
       with:
         go-version-file: go.mod
 
-    - name: Build
-      run: |
+    - run: |
         mv .github/build/Makefile .
         make
+        rm -rf dist
+        mkdir dist
 
     - name: Package
-      run: |
-        mkdir .dist
-        tar -czvf .dist/pastebin-linux-amd64.tar.gz pastebin
+      run: tar -czvf dist/pastebin-linux-amd64.tar.gz pastebin
 
     - name: Package Arch Linux
       run: |
-        V=$(git describe --abbrev=0 --tags)
-        sed -i s/pkgver=/pkgver=$V/ .github/pkg/PKGBUILD
         mv pastebin .github/pkg
-        docker build --output=. .github/pkg
-        mv pastebin-$V-*.pkg.tar.zst .dist/
+        v=$(git describe --abbrev=0 --tags)
+        sed s/pkgver=/pkgver=$v/ -i .github/pkg/PKGBUILD
+        docker build --output=dist/ .github/pkg
 
-    - name: Upload Release
-      uses: softprops/action-gh-release@v2
+    - uses: softprops/action-gh-release@v2
       env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
