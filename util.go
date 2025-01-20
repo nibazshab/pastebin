@@ -14,9 +14,12 @@ var dataPath string
 
 func getDataFile(file string) string {
 	if dataPath == "" {
-		ex, _ := os.Executable()
-
-		dataPath = filepath.Join(filepath.Dir(ex), *path)
+		if filepath.IsAbs(*path) {
+			dataPath = filepath.Clean(*path)
+		} else {
+			ex, _ := os.Executable()
+			dataPath = filepath.Join(filepath.Dir(ex), *path)
+		}
 
 		if _, err := os.Stat(dataPath); os.IsNotExist(err) {
 			_ = os.MkdirAll(dataPath, 0o755)
