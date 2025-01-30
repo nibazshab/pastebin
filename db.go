@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"time"
 
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
@@ -18,9 +19,9 @@ type Data struct {
 	Text     string
 	FileName string
 	Size     int64
-	Create   int64
-	LastView int64
-	Count    int `gorm:"default:0"`
+	Create   time.Time `gorm:"autoCreateTime"`
+	LastView time.Time `gorm:"autoUpdateTime"`
+	Count    int       `gorm:"default:0"`
 	Type     string
 	Preview  bool
 }

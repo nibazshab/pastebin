@@ -30,10 +30,6 @@ func getDataFile(file string) string {
 	return dataFile
 }
 
-func getUnixTime() int64 {
-	return time.Now().Unix()
-}
-
 func convHashId(s string) uint32 {
 	h := fnv.New32a()
 	_, _ = h.Write([]byte(s))

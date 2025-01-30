@@ -55,9 +55,8 @@ func handleReqData(c *gin.Context) {
 		}
 
 		infoData := &Data{
-			ID:       dbHashId,
-			Count:    reqData.Count + 1,
-			LastView: getUnixTime(),
+			ID:    dbHashId,
+			Count: reqData.Count + 1,
 		}
 		dbUpdateDataInfo(infoData)
 	} else {
@@ -137,7 +136,6 @@ func handleUploadData(c *gin.Context) (string, bool) {
 		textData := &Data{
 			Text:    string(fileText),
 			Size:    fileSize,
-			Create:  getUnixTime(),
 			Type:    fileType,
 			Preview: fileView,
 		}
@@ -148,7 +146,6 @@ func handleUploadData(c *gin.Context) (string, bool) {
 		fileData := &Data{
 			FileName: fileName,
 			Size:     fileSize,
-			Create:   getUnixTime(),
 			Type:     fileType,
 			Preview:  fileView,
 		}
