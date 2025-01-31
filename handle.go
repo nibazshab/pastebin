@@ -55,8 +55,7 @@ func handleReqData(c *gin.Context) {
 		}
 
 		infoData := &Data{
-			ID:    dbHashId,
-			Count: reqData.Count + 1,
+			ID: dbHashId,
 		}
 		dbUpdateDataInfo(infoData)
 	} else {

@@ -60,7 +60,7 @@ func dbGetDataByID(data *Data) *Data {
 }
 
 func dbUpdateDataInfo(data *Data) {
-	db.Model(&Data{ID: data.ID}).Updates(data)
+	db.Model(data).Update("count", gorm.Expr("count + ?", 1))
 }
 
 func dbWriteData(data *Data) bool {
