@@ -108,101 +108,101 @@
 </form>
 </body>
 <script>
-    const dropContainer = document.getElementById('upload-form');
-    const selectFileButton = document.getElementById('select-file-button');
-    const fileInput = document.getElementById('file-input');
-    const textInput = document.getElementById('text-input');
-    const saveButton = document.getElementById('save-input');
-    const linkElement = document.getElementById('link');
-    let op;
+    const dropContainer = document.getElementById('upload-form')
+    const selectFileButton = document.getElementById('select-file-button')
+    const fileInput = document.getElementById('file-input')
+    const textInput = document.getElementById('text-input')
+    const saveButton = document.getElementById('save-input')
+    const linkElement = document.getElementById('link')
+    let op
 
     function fileinput(file) {
-        const dataTransfer = new DataTransfer();
-        dataTransfer.items.add(file);
-        fileInput.files = dataTransfer.files;
-        selectFileButton.textContent = "Attached: " + fileInput.files[0].name;
+        const dataTransfer = new DataTransfer()
+        dataTransfer.items.add(file)
+        fileInput.files = dataTransfer.files
+        selectFileButton.textContent = "Attached: " + fileInput.files[0].name
         op = true
     }
 
     fileInput.addEventListener('change', () => {
         if (fileInput.files[0]) {
-            selectFileButton.textContent = "Attached: " + fileInput.files[0].name;
+            selectFileButton.textContent = "Attached: " + fileInput.files[0].name
             op = true
         } else {
-            selectFileButton.textContent = "Select or drop a attachment";
+            selectFileButton.textContent = "Select or drop a attachment"
             op = false
         }
-    });
+    })
 
     dropContainer.addEventListener('dragover', (event) => {
-        event.preventDefault();
-    });
+        event.preventDefault()
+    })
 
     dropContainer.addEventListener('drop', (event) => {
-        event.preventDefault();
+        event.preventDefault()
         fileinput(event.dataTransfer.files[0])
-    });
+    })
 
     dropContainer.addEventListener('paste', (event) => {
         const image = ((event) => {
-            const item = event.clipboardData.items[0];
+            const item = event.clipboardData.items[0]
             if (!/^image\//.test(item.type)) {
-                return null;
+                return null
             }
-            return [item];
-        })(event);
-        if (!image) return;
+            return [item]
+        })(event)
+        if (!image) return
         fileinput(image[0].getAsFile())
-    });
+    })
 
-    const uploadForm = document.getElementById('upload-form');
+    const uploadForm = document.getElementById('upload-form')
     uploadForm.addEventListener('submit', async (event) => {
-        event.preventDefault();
-        const formData = new FormData();
-        let uploadFile, uploadType, preview;
+        event.preventDefault()
+        const formData = new FormData()
+        let uploadFile, uploadType, preview
 
         if (op) {
-            const file = fileInput.files[0];
+            const file = fileInput.files[0]
             if (file.size > 104857600) {
-                selectFileButton.style.borderColor = '#f00';
-                selectFileButton.style.color = '#f00';
-                selectFileButton.textContent = "The attachment need less than 100 mb";
-                return;
+                selectFileButton.style.borderColor = '#f00'
+                selectFileButton.style.color = '#f00'
+                selectFileButton.textContent = "The attachment need less than 100 mb"
+                return
             }
-            preview = /^image\//.test(file.type);
+            preview = /^image\//.test(file.type)
             uploadType = "file"
-            uploadFile = file;
+            uploadFile = file
         } else {
-            const text = textInput.value;
+            const text = textInput.value
             if (text.trim() === '') {
-                textInput.focus();
-                return;
+                textInput.focus()
+                return
             }
             preview = true
-            uploadType = "text";
-            uploadFile = new File([text], "f", {type: "text/plain"});
+            uploadType = "text"
+            uploadFile = new File([text], "f", {type: "text/plain"})
         }
 
-        saveButton.disabled = true;
-        saveButton.style.backgroundColor = "#d0d0d0";
+        saveButton.disabled = true
+        saveButton.style.backgroundColor = "#d0d0d0"
 
-        linkElement.textContent = 'saving...';
+        linkElement.textContent = 'saving...'
 
         try {
-            formData.append('f', uploadFile);
+            formData.append('f', uploadFile)
             formData.append('t', uploadType)
             formData.append('v', preview)
             const response = await fetch(window.location.href, {
                 method: 'POST',
                 body: formData
-            });
+            })
 
-            linkElement.textContent = await response.text();
+            linkElement.textContent = await response.text()
         } catch (error) {
-            console.error("Error:", error);
-            linkElement.textContent = "Error saving.";
+            console.error("Error:", error)
+            linkElement.textContent = "Error saving."
         }
-    });
+    })
 </script>
 
 </html>
