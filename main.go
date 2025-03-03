@@ -1,8 +1,11 @@
 package main
 
 import (
+	"embed"
+	"errors"
 	"flag"
 	"fmt"
+	"io/fs"
 	"log"
 	"net/http"
 	"os"
@@ -14,79 +17,81 @@ import (
 
 const (
 	_port = "10002"
-	_path = "pastebin_data"
+	_dir  = "pastebin_data"
 )
 
 var (
 	version string
 	port    *string
-	path    *string
+	dir     *string
+
+	attDir string
+
+	//go:embed all:dist
+	web embed.FS
 )
 
 func main() {
-	flagInit()
-	dbInit()
-	logInit()
-	attachmentInit()
+	config()
+	attachment()
+	initDb()
 
 	run()
 }
 
 func run() {
-	ch := make(chan os.Signal, 1)
-	signal.Notify(ch, syscall.SIGINT, syscall.SIGTERM)
-
-	defer dbClose()
-
 	gin.SetMode(gin.ReleaseMode)
 	r := gin.New()
 
-	//g := r.Group("/assets")
-	//{
-	//	g.Use(cacheControl)
-	//	publicFile(g)
-	//}
+	r.GET("/:uid", requestPaste)
+	r.POST("/", uploadPaste)
 
-	r.GET("/favicon.ico", cacheControl, func(c *gin.Context) {
-		c.Data(http.StatusOK, "image/x-icon", []byte{})
-	})
+	c := r.Group("/")
+	c.Use(cacheControl())
+	c.GET("/", indexPage)
+	c.GET("/favicon.ico", favicon)
 
-	r.GET("/", cacheControl, indexPage)
-	r.GET("/:id", handleReqData)
-
-	r.POST("/", func(c *gin.Context) {
-		pathId, is := handleUploadData(c)
-		if is {
-			logWrite(c, pathId)
-		}
-	})
-
-	fmt.Printf("pastebin %s\n", version)
-	log.Printf("start HTTP server @ 0.0.0.0:%s\n", *port)
+	log.Printf("Pastebin start HTTP server @ 0.0.0.0:%s\n", *port)
 
 	go func() {
-		if err := r.Run(":" + *port); err != nil {
-			log.Fatalln("start error: ", err)
-		}
+		r.Run(":" + *port)
 	}()
 
+	ch := make(chan os.Signal, 1)
+	signal.Notify(ch, syscall.SIGINT, syscall.SIGTERM)
 	<-ch
+
+	_db, _ := db.DB()
+	_db.Close()
 }
 
-func flagInit() {
-	port = flag.String("port", _port, "server port")
-	path = flag.String("path", _path, "data directory")
-	_v := flag.Bool("v", false, "version")
+func config() {
+	port = flag.String("port", _port, "PORT")
+	dir = flag.String("dir", _dir, "DIR")
+	v := flag.Bool("v", false, "version")
 
 	flag.Parse()
 
-	if *_v {
-		fmt.Printf("Version %s\nVisit github.com/nibazshab/pastebin", version)
+	if *v {
+		fmt.Printf("Pastebin %s", version)
 		os.Exit(0)
 	}
 }
 
-func cacheControl(c *gin.Context) {
-	c.Header("Cache-Control", "public, max-age=3600")
-	c.Next()
+func attachment() {
+	attDir = objectPath("attachment")
+	_, err := os.Stat(attDir)
+	if err != nil {
+		if errors.Is(err, fs.ErrNotExist) {
+			os.Mkdir(attDir, 0o755)
+		}
+	}
+}
+
+func indexPage(c *gin.Context) {
+	c.FileFromFS("dist/", http.FS(web))
+}
+
+func favicon(c *gin.Context) {
+	c.Data(http.StatusOK, "image/x-icon", []byte{})
 }

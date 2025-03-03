@@ -1,7 +1,0 @@
-[Unit]
-Description=pastebin service
-[Service]
-ExecStart=/usr/local/pastebin/pastebin
-Restart=on-failure
-[Install]
-WantedBy=multi-user.target

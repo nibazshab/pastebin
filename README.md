@@ -2,14 +2,30 @@
 
 一个工具，可以用来生成纯文本网页分享文字内容，或者也可以上传附件，作为一个临时的文件服务器分享给别人
 
-单次分享的限制为 100mb，暂不支持反向代理到域名子目录，数据和日志默认位于 pastebin_data 目录中
-
 ### 快速上手
 
-直接运行独立的二进制文件即可，默认监听 10002 端口
+直接运行独立的二进制文件即可，默认监听 10002 端口，数据默认位于 pastebin_data 目录中，单次分享的限制为 100mb
 
 ```sh
 ./pastebin
+```
+
+配合 systemd 使用 pastebin.service
+
+```ini
+[Unit]
+Description=Pastebin service
+[Service]
+ExecStart=/usr/local/pastebin/pastebin
+Restart=on-failure
+[Install]
+WantedBy=multi-user.target
+```
+
+### 构建说明
+
+```sh
+make
 ```
 
 ### 使用说明
@@ -19,7 +35,7 @@
 参数|默认值|描述
 -|-|-
 -port|10002|程序监听的端口号
--path|pastebin_data|数据目录（相对程序文件的路径）
+-dir|pastebin_data|数据目录（相对程序文件的路径）
 
 ### API
 
@@ -27,22 +43,12 @@
 
 请求：multipart/form-data，返回存储了数据内容的链接
 
-body：`f=@文件` 上传的文件，（可选）`t=text/file` 文件类型，（可选）`v=true/false` 是否可预览
+body：`f=@文件` 上传的文件
+headers:（选）`X-V=1` 文件可在浏览器预览
 
 - ___GET /{uid}___
 
 返回该链接所对应的内容
-
-## PLAN-B
-
-- [x] 响应 `dmesg | curl -F "f=@-" host` 形式的请求
-- [x] 解决 favicon.ico 的问题
-- [x] 变更相对路径为绝对路径
-- [x] 自定义端口号
-- [x] 美化页面，重写糟糕的 js
-- [x] 修复 xlsx, word 等被检测为 zip 类型的问题（直接返回原始文件名）
-- [x] ctrl v 上传图片
-- [x] 支持绝对路径的数据目录
 
 ## 许可证
 

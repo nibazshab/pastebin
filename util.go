@@ -1,52 +1,59 @@
 package main
 
 import (
+	"errors"
 	"hash/fnv"
+	"io/fs"
+	"log"
 	"math/rand"
 	"net/http"
 	"os"
 	"path/filepath"
 	"time"
 	"unsafe"
+
+	"github.com/gin-gonic/gin"
 )
 
-var dataPath string
-
-func getDataFile(file string) string {
-	if dataPath == "" {
-		if filepath.IsAbs(*path) {
-			dataPath = filepath.Clean(*path)
-		} else {
-			ex, _ := os.Executable()
-			dataPath = filepath.Join(filepath.Dir(ex), *path)
-		}
-
-		if _, err := os.Stat(dataPath); os.IsNotExist(err) {
-			_ = os.MkdirAll(dataPath, 0o755)
-		}
+func cacheControl() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		c.Header("Cache-Control", "public, max-age=86400")
+		c.Next()
 	}
-
-	dataFile := filepath.Join(dataPath, file)
-	return dataFile
 }
 
-func convHashId(s string) uint32 {
-	h := fnv.New32a()
-	_, _ = h.Write([]byte(s))
-	return h.Sum32()
-}
-
-func GetUserIP(req *http.Request) string {
+func getRequestIp(req *http.Request) string {
 	ip := req.Header.Get("X-Forwarded-For")
 	if ip == "" {
 		ip = req.RemoteAddr
 	}
-
 	return ip
 }
 
-func GetUserUA(req *http.Request) string {
-	return req.Header.Get("user-agent")
+var dataPath string
+
+func objectPath(objName string) string {
+	if dataPath == "" {
+		if filepath.IsAbs(*dir) {
+			dataPath = filepath.Clean(*dir)
+		} else {
+			ex, _ := os.Executable()
+			dataPath = filepath.Join(filepath.Dir(ex), *dir)
+		}
+
+		_, err := os.Stat(dataPath)
+		if errors.Is(err, fs.ErrNotExist) {
+			log.Fatalf("%s 必须是一个有效的目录", *dir)
+		}
+	}
+
+	return filepath.Join(dataPath, objName)
+}
+
+func convHash(uid string) int64 {
+	hasher := fnv.New64a()
+	hasher.Write([]byte(uid))
+	return int64(hasher.Sum64())
 }
 
 // http://stackoverflow.com/questions/22892120/how-to-generate-a-random-string-of-a-fixed-length-in-golang
@@ -60,9 +67,8 @@ const (
 
 var src = rand.NewSource(time.Now().UnixNano())
 
-func RandStr(n int) string { // RandStringBytesMaskImprSrcUnsafe
+func randUid(n int) string { // RandStringBytesMaskImprSrcUnsafe
 	b := make([]byte, n)
-
 	// A src.Int63() generates 63 random bits, enough for letterIdxMax characters!
 	for i, cache, remain := n-1, src.Int63(), letterIdxMax; i >= 0; {
 		if remain == 0 {

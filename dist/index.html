@@ -169,8 +169,12 @@
                 selectFileButton.textContent = "The attachment need less than 100 mb"
                 return
             }
-            preview = /^image\//.test(file.type)
-            uploadType = "file"
+            if (/^image\//.test(file.type)){
+                preview = 1
+            } else {
+                preview = 0
+            }
+
             uploadFile = file
         } else {
             const text = textInput.value
@@ -178,8 +182,7 @@
                 textInput.focus()
                 return
             }
-            preview = true
-            uploadType = "text"
+            preview = 1
             uploadFile = new File([text], "f", {type: "text/plain"})
         }
 
@@ -190,14 +193,17 @@
 
         try {
             formData.append('f', uploadFile)
-            formData.append('t', uploadType)
-            formData.append('v', preview)
+
+            const headers = new Headers();
+            headers.append('X-V', preview.toString());
+
             const response = await fetch(window.location.href, {
                 method: 'POST',
-                body: formData
+                body: formData,
+                headers: headers
             })
 
-            linkElement.textContent = await response.text()
+            linkElement.textContent = window.location.href + await response.text()
         } catch (error) {
             console.error("Error:", error)
             linkElement.textContent = "Error saving."

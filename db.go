@@ -1,69 +1,36 @@
 package main
 
 import (
-	"log"
-	"time"
-
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
-	"gorm.io/gorm/logger"
-	"gorm.io/gorm/schema"
 )
-
-const tablePrefix = "pastebin_"
 
 var db *gorm.DB
 
-type Data struct {
-	ID       uint32 `gorm:"primaryKey"`
+type Paste struct {
+	HashKey  int64  `gorm:"primaryKey"`
+	Uid      string `gorm:"unique"`
 	Text     string
 	FileName string
 	Size     int64
-	Create   time.Time `gorm:"autoCreateTime"`
-	LastView time.Time `gorm:"autoUpdateTime"`
-	Count    int       `gorm:"default:0"`
-	Type     string
 	Preview  bool
 }
 
-func dbInit() {
-	var err error
-	dbFile := getDataFile("database.sqlite")
-
-	db, err = gorm.Open(sqlite.Open(dbFile+"?_journal=WAL&_vacuum=incremental"), &gorm.Config{
-		NamingStrategy: schema.NamingStrategy{
-			TablePrefix: tablePrefix,
-		},
-		Logger: logger.Default.LogMode(logger.Silent),
-	})
-	if err != nil {
-		log.Fatalln("db connect error: ", err)
-	}
-
-	err = db.AutoMigrate(&Data{})
-	if err != nil {
-		log.Fatalln("db init error: ", err)
-	}
+func (*Paste) TableName() string {
+	return "pastebin"
 }
 
-func dbClose() {
-	_db, _ := db.DB()
-	err := _db.Close()
-	if err != nil {
-		log.Fatalln("db close error: ", err)
-	}
+func initDb() {
+	dbFile := objectPath("pastebin.db3")
+	db, _ = gorm.Open(sqlite.Open(dbFile + "?_journal=WAL&_vacuum=incremental"))
+
+	db.AutoMigrate(&Paste{})
 }
 
-func dbGetDataByID(data *Data) *Data {
-	db.Where(data).First(data)
-	return data
+func (p *Paste) getPaste() bool {
+	return db.Model(p).First(p).Error == nil
 }
 
-func dbUpdateDataInfo(data *Data) {
-	db.Model(data).Update("count", gorm.Expr("count + ?", 1))
-}
-
-func dbWriteData(data *Data) bool {
-	err := db.Create(data).Error
-	return err == nil
+func (p *Paste) newPaste() bool {
+	return db.Create(p).Error == nil
 }
