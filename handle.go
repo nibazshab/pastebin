@@ -45,8 +45,6 @@ func requestPaste(c *gin.Context) {
 }
 
 func uploadPaste(c *gin.Context) {
-	c.Request.ParseMultipartForm(maxBodySize)
-
 	fileHeader, err := c.FormFile(formName)
 	if err != nil {
 		c.String(http.StatusBadRequest, fmt.Sprintf("Form name != %s", formName))
@@ -109,22 +107,20 @@ func (p *Paste) inputNewPaste() {
 func maxBodySizeMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		if c.Request.ContentLength > maxBodySize {
-			goto err
+			c.String(http.StatusRequestEntityTooLarge, fmt.Sprintf("Request > %d", maxBodySize))
+			return
 		}
-
 		c.Request.Body = http.MaxBytesReader(c.Writer, c.Request.Body, maxBodySize)
-		c.Next()
-
-		if c.Err() != nil {
+		err := c.Request.ParseMultipartForm(maxBodySize)
+		if err != nil {
 			var maxBytesError *http.MaxBytesError
-			if errors.As(c.Err(), &maxBytesError) {
-				goto err
+			if errors.As(err, &maxBytesError) {
+				c.String(http.StatusRequestEntityTooLarge, fmt.Sprintf("Request > %d", maxBodySize))
+			} else {
+				c.Status(http.StatusBadRequest)
 			}
+			return
 		}
-		return
-	err:
-		c.String(http.StatusRequestEntityTooLarge, fmt.Sprintf("Request > %d", maxBodySize))
-		c.Abort()
-		return
+		c.Next()
 	}
 }
