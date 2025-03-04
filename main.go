@@ -16,24 +16,28 @@ import (
 )
 
 const (
-	_port = "10002"
-	_dir  = "pastebin_data"
+	portDef = "10002"
+	dirDef  = "pastebin_data"
+
+	programName = "Pastebin"
+	attDirName  = "attachment"
+	embedDir    = "dist/"
 )
 
 var (
+	//go:embed all:dist
+	web embed.FS
+
 	version string
 	port    *string
 	dir     *string
 
 	attDir string
-
-	//go:embed all:dist
-	web embed.FS
 )
 
 func main() {
 	config()
-	attachment()
+	initAttachment()
 	initDb()
 
 	run()
@@ -44,14 +48,14 @@ func run() {
 	r := gin.New()
 
 	r.GET("/:uid", requestPaste)
-	r.POST("/", uploadPaste)
+	r.POST("/", maxBodySizeMiddleware(), uploadPaste)
 
 	c := r.Group("/")
 	c.Use(cacheControl())
 	c.GET("/", indexPage)
 	c.GET("/favicon.ico", favicon)
 
-	log.Printf("Pastebin start HTTP server @ 0.0.0.0:%s\n", *port)
+	log.Printf("%s start HTTP server @ 0.0.0.0:%s", programName, *port)
 
 	go func() {
 		r.Run(":" + *port)
@@ -66,20 +70,20 @@ func run() {
 }
 
 func config() {
-	port = flag.String("port", _port, "PORT")
-	dir = flag.String("dir", _dir, "DIR")
+	port = flag.String("port", portDef, "PORT")
+	dir = flag.String("dir", dirDef, "DIR")
 	v := flag.Bool("v", false, "version")
 
 	flag.Parse()
 
 	if *v {
-		fmt.Printf("Pastebin %s", version)
+		fmt.Printf("%s %s", programName, version)
 		os.Exit(0)
 	}
 }
 
-func attachment() {
-	attDir = objectPath("attachment")
+func initAttachment() {
+	attDir = objectPath(attDirName)
 	_, err := os.Stat(attDir)
 	if err != nil {
 		if errors.Is(err, fs.ErrNotExist) {
@@ -89,7 +93,7 @@ func attachment() {
 }
 
 func indexPage(c *gin.Context) {
-	c.FileFromFS("dist/", http.FS(web))
+	c.FileFromFS(embedDir, http.FS(web))
 }
 
 func favicon(c *gin.Context) {

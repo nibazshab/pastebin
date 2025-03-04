@@ -5,6 +5,11 @@ import (
 	"gorm.io/gorm"
 )
 
+const (
+	dbName    = "pastebin.db3"
+	tableName = "pastebin"
+)
+
 var db *gorm.DB
 
 type Paste struct {
@@ -17,11 +22,11 @@ type Paste struct {
 }
 
 func (*Paste) TableName() string {
-	return "pastebin"
+	return tableName
 }
 
 func initDb() {
-	dbFile := objectPath("pastebin.db3")
+	dbFile := objectPath(dbName)
 	db, _ = gorm.Open(sqlite.Open(dbFile + "?_journal=WAL&_vacuum=incremental"))
 
 	db.AutoMigrate(&Paste{})

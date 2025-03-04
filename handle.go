@@ -15,15 +15,17 @@ import (
 const (
 	uidLength   = 4
 	maxBodySize = 100 * 1024 * 1024
-	preview     = "1"
+
+	formName      = "f"
+	previewHeader = "X-V"
+	preview       = "1"
 )
 
 func requestPaste(c *gin.Context) {
 	uid := c.Param("uid")
-	hashKey := convHash(uid)
 
 	p := &Paste{
-		HashKey: hashKey,
+		HashKey: convHash(uid),
 	}
 
 	if p.getPaste() {
@@ -43,25 +45,14 @@ func requestPaste(c *gin.Context) {
 }
 
 func uploadPaste(c *gin.Context) {
-	c.Request.Body = http.MaxBytesReader(c.Writer, c.Request.Body, maxBodySize)
-	err := c.Request.ParseMultipartForm(maxBodySize)
+	c.Request.ParseMultipartForm(maxBodySize)
+
+	fileHeader, err := c.FormFile(formName)
 	if err != nil {
-		var maxBytesError *http.MaxBytesError
-		if errors.As(err, &maxBytesError) {
-			c.String(http.StatusBadRequest, fmt.Sprintf("Request > %d", maxBodySize))
-		} else {
-			c.String(http.StatusBadRequest, "Request error")
-		}
+		c.String(http.StatusBadRequest, fmt.Sprintf("Form name != %s", formName))
 		return
 	}
-
-	fileHeader, err := c.FormFile("f")
-	if err != nil {
-		c.String(http.StatusBadRequest, "Form name != f")
-		return
-	}
-
-	xv := c.GetHeader("X-V")
+	xv := c.GetHeader(previewHeader)
 
 	file, _ := fileHeader.Open()
 	defer file.Close()
@@ -89,11 +80,11 @@ func uploadPaste(c *gin.Context) {
 
 		p.Text = string(text)
 		p.Size = fileHeader.Size
-		p.input()
+		p.inputNewPaste()
 	} else {
 		p.FileName = fileHeader.Filename
 		p.Size = fileHeader.Size
-		p.input()
+		p.inputNewPaste()
 
 		_fs := filepath.Join(attDir, p.Uid, p.FileName)
 		c.SaveUploadedFile(fileHeader, _fs)
@@ -103,7 +94,7 @@ func uploadPaste(c *gin.Context) {
 	log.Printf("%s | %s", p.Uid, getRequestIp(c.Request))
 }
 
-func (p *Paste) input() {
+func (p *Paste) inputNewPaste() {
 	n := uidLength
 	for {
 		p.HashKey = convHash(p.Uid)
@@ -112,5 +103,28 @@ func (p *Paste) input() {
 		}
 		n++
 		p.Uid = randUid(n)
+	}
+}
+
+func maxBodySizeMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		if c.Request.ContentLength > maxBodySize {
+			goto err
+		}
+
+		c.Request.Body = http.MaxBytesReader(c.Writer, c.Request.Body, maxBodySize)
+		c.Next()
+
+		if c.Err() != nil {
+			var maxBytesError *http.MaxBytesError
+			if errors.As(c.Err(), &maxBytesError) {
+				goto err
+			}
+		}
+		return
+	err:
+		c.String(http.StatusRequestEntityTooLarge, fmt.Sprintf("Request > %d", maxBodySize))
+		c.Abort()
+		return
 	}
 }
