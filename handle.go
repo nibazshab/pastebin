@@ -16,9 +16,11 @@ const (
 	uidLength   = 4
 	maxBodySize = 100 * 1024 * 1024
 
-	formName      = "f"
-	previewHeader = "X-V"
-	preview       = "1"
+	formName         = "f"
+	previewHeader    = "X-V"
+	preview          = "1"
+	imagePreviewSize = 5 << 20
+	textPreviewSize  = 1 << 20
 )
 
 func requestPaste(c *gin.Context) {
@@ -66,8 +68,8 @@ func uploadPaste(c *gin.Context) {
 		file.Seek(0, io.SeekStart)
 		mime := http.DetectContentType(buf[:num])
 
-		_t = strings.HasPrefix(mime, "text")
-		p.Preview = _t || strings.HasPrefix(mime, "image")
+		_t = strings.HasPrefix(mime, "text") && fileHeader.Size < textPreviewSize
+		p.Preview = _t || strings.HasPrefix(mime, "image") && fileHeader.Size < imagePreviewSize
 	} else {
 		_t = false
 		p.Preview = false

@@ -48,6 +48,11 @@
             margin-bottom: 30px;
         }
 
+        #save-input:disabled {
+            background: #ddd;
+            cursor: not-allowed;
+        }
+
         #save-input {
             padding: 12px 35px;
             cursor: pointer;
@@ -108,107 +113,124 @@
 </form>
 </body>
 <script>
-    const dropContainer = document.getElementById('upload-form')
-    const selectFileButton = document.getElementById('select-file-button')
-    const fileInput = document.getElementById('file-input')
-    const textInput = document.getElementById('text-input')
-    const saveButton = document.getElementById('save-input')
-    const linkElement = document.getElementById('link')
-    let op
+    const uploadForm = document.getElementById('upload-form');
+    const selectFileButton = document.getElementById('select-file-button');
+    const fileInput = document.getElementById('file-input');
+    const textInput = document.getElementById('text-input');
+    const saveButton = document.getElementById('save-input');
+    const linkElement = document.getElementById('link');
 
-    function fileinput(file) {
-        const dataTransfer = new DataTransfer()
-        dataTransfer.items.add(file)
-        fileInput.files = dataTransfer.files
-        selectFileButton.textContent = "Attached: " + fileInput.files[0].name
-        op = true
-    }
+    const MAX_FILE_SIZE = 104857600;
+    const IMAGE_PREVIEW_SIZE = 5242880;
+    let xv = false;
+    let hasFile = false;
+
+    const updateFileButtonState = (filename, isError = false) => {
+        selectFileButton.textContent = filename
+            ? `Attached: ${filename}`
+            : "Select or drop an attachment";
+    };
+
+    const handleFileSelection = (file) => {
+        if (!file) {
+            xv = false
+            hasFile = false;
+            updateFileButtonState(null);
+            fileInput.value = '';
+            return;
+        }
+
+        const isXVType = type => file.type.startsWith(type);
+        if (isXVType('image') && file.size < IMAGE_PREVIEW_SIZE) {
+            xv = true;
+        }
+
+        const dataTransfer = new DataTransfer();
+        dataTransfer.items.add(file);
+        fileInput.files = dataTransfer.files;
+        hasFile = true;
+        updateFileButtonState(file.name);
+    };
 
     fileInput.addEventListener('change', () => {
-        if (fileInput.files[0]) {
-            selectFileButton.textContent = "Attached: " + fileInput.files[0].name
-            op = true
-        } else {
-            selectFileButton.textContent = "Select or drop a attachment"
-            op = false
+        const file = fileInput.files[0];
+        file ? handleFileSelection(file) : handleFileSelection(null);
+    });
+
+    uploadForm.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        uploadForm.classList.add('dragover');
+    });
+
+    uploadForm.addEventListener('dragleave', () => {
+        uploadForm.classList.remove('dragover');
+    });
+
+    uploadForm.addEventListener('drop', (e) => {
+        e.preventDefault();
+        uploadForm.classList.remove('dragover');
+        const file = e.dataTransfer.files[0];
+        if (file) handleFileSelection(file);
+    });
+
+    uploadForm.addEventListener('paste', (e) => {
+        const clipboardItems = e.clipboardData.items;
+        for (const item of clipboardItems) {
+            if (item.kind === 'file' && item.type.startsWith('image/')) {
+                const file = item.getAsFile();
+                if (file) handleFileSelection(file);
+                break;
+            }
         }
-    })
+    });
 
-    dropContainer.addEventListener('dragover', (event) => {
-        event.preventDefault()
-    })
+    uploadForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
 
-    dropContainer.addEventListener('drop', (event) => {
-        event.preventDefault()
-        fileinput(event.dataTransfer.files[0])
-    })
-
-    dropContainer.addEventListener('paste', (event) => {
-        const image = ((event) => {
-            const item = event.clipboardData.items[0]
-            if (!/^image\//.test(item.type)) {
-                return null
-            }
-            return [item]
-        })(event)
-        if (!image) return
-        fileinput(image[0].getAsFile())
-    })
-
-    const uploadForm = document.getElementById('upload-form')
-    uploadForm.addEventListener('submit', async (event) => {
-        event.preventDefault()
-        const formData = new FormData()
-        let uploadFile, uploadType, preview
-
-        if (op) {
-            const file = fileInput.files[0]
-            if (file.size > 104857600) {
-                selectFileButton.style.borderColor = '#f00'
-                selectFileButton.style.color = '#f00'
-                selectFileButton.textContent = "The attachment need less than 100 mb"
-                return
-            }
-            if (/^image\//.test(file.type)){
-                preview = 1
-            } else {
-                preview = 0
-            }
-
-            uploadFile = file
-        } else {
-            const text = textInput.value
-            if (text.trim() === '') {
-                textInput.focus()
-                return
-            }
-            preview = 1
-            uploadFile = new File([text], "f", {type: "text/plain"})
-        }
-
-        saveButton.disabled = true
-        saveButton.style.backgroundColor = "#d0d0d0"
-
-        linkElement.textContent = 'saving...'
+        if (saveButton.disabled) return;
+        saveButton.disabled = true;
+        linkElement.textContent = 'Saving...';
 
         try {
-            formData.append('f', uploadFile)
+            const formData = new FormData();
+            let uploadFile;
 
-            const headers = new Headers();
-            headers.append('X-V', preview.toString());
+            if (hasFile) {
+                const file = fileInput.files[0];
+                if (file.size > MAX_FILE_SIZE) {
+                    throw new Error('File size exceeds 100MB limit');
+                }
+                uploadFile = file;
+            } else {
+                const text = textInput.value.trim();
+                if (!text) {
+                    textInput.focus();
+                    throw new Error('Please enter text or select a file');
+                }
+                xv = true
+                uploadFile = new File([text], "content.txt", {type: "text/plain"});
+            }
+
+            formData.append('f', uploadFile);
 
             const response = await fetch(window.location.href, {
                 method: 'POST',
                 body: formData,
-                headers: headers
-            })
+                headers: {'X-V': xv ? '1' : '0'}
+            });
 
-            linkElement.textContent = window.location.href + await response.text()
+            if (!response.ok) throw new Error('Server returned an error');
+
+            const result = await response.text();
+            linkElement.innerHTML = `${window.location.href}${result}`;
         } catch (error) {
-            console.error("Error:", error)
-            linkElement.textContent = "Error saving."
+            console.error('Upload error:', error);
+            linkElement.textContent = `Error: ${error.message}`;
+            linkElement.style.color = '#ff0000';
         }
-    })
+    });
+
+    updateFileButtonState(null);
 </script>
 
 </html>
