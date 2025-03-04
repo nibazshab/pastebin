@@ -21,7 +21,7 @@ cclib:
 	if [ ! -d "$(MUSL_DIR)" ]; then \
 		mkdir -p $(MUSL_DIR) && \
 		wget -O $(MUSL_DIR).tgz $(MUSL_LINK) && \
-		tar -zxvf $(MUSL_DIR).tgz --strip-components=1 -C $(MUSL_DIR) && \
+		tar -zxf $(MUSL_DIR).tgz --strip-components=1 -C $(MUSL_DIR) && \
 		rm $(MUSL_DIR).tgz; \
 	fi
 
