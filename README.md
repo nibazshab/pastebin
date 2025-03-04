@@ -46,7 +46,7 @@ make
 请求：multipart/form-data，返回存储了数据内容的链接
 
 body `f=@文件` 上传的文件  
-headers `X-V=1` 文件可在浏览器预览（选）
+headers `X-V=0/1` 是否可在浏览器预览（选）
 
 - ___GET /{uid}___
 

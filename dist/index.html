@@ -216,7 +216,7 @@
             const response = await fetch(window.location.href, {
                 method: 'POST',
                 body: formData,
-                headers: {'X-V': xv ? '1' : '0'}
+                headers: {'X-V': xv ? '0' : '1'}
             });
 
             if (!response.ok) throw new Error('Server returned an error');

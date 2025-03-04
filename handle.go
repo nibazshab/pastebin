@@ -18,7 +18,7 @@ const (
 
 	formName         = "f"
 	previewHeader    = "X-V"
-	preview          = "1"
+	notView          = "1"
 	imagePreviewSize = 5 << 20
 	textPreviewSize  = 1 << 20
 )
@@ -62,7 +62,10 @@ func uploadPaste(c *gin.Context) {
 	}
 
 	var _t bool
-	if xv == preview {
+	if xv == notView {
+		_t = false
+		p.Preview = false
+	} else {
 		buf := make([]byte, 512)
 		num, _ := file.Read(buf)
 		file.Seek(0, io.SeekStart)
@@ -70,9 +73,6 @@ func uploadPaste(c *gin.Context) {
 
 		_t = strings.HasPrefix(mime, "text") && fileHeader.Size < textPreviewSize
 		p.Preview = _t || strings.HasPrefix(mime, "image") && fileHeader.Size < imagePreviewSize
-	} else {
-		_t = false
-		p.Preview = false
 	}
 
 	if _t {

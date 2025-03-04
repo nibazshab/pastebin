@@ -4,7 +4,6 @@ import (
 	"errors"
 	"hash/fnv"
 	"io/fs"
-	"log"
 	"math/rand"
 	"net/http"
 	"os"
@@ -43,7 +42,7 @@ func objectPath(objName string) string {
 
 		_, err := os.Stat(dataPath)
 		if errors.Is(err, fs.ErrNotExist) {
-			log.Fatalf("%s 必须是一个有效的目录", *dir)
+			os.MkdirAll(dataPath, 0o755)
 		}
 	}
 
