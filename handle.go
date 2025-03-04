@@ -110,6 +110,7 @@ func maxBodySizeMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		if c.Request.ContentLength > maxBodySize {
 			c.String(http.StatusRequestEntityTooLarge, fmt.Sprintf("Request > %d", maxBodySize))
+			c.Abort()
 			return
 		}
 		c.Request.Body = http.MaxBytesReader(c.Writer, c.Request.Body, maxBodySize)
@@ -121,6 +122,7 @@ func maxBodySizeMiddleware() gin.HandlerFunc {
 			} else {
 				c.Status(http.StatusBadRequest)
 			}
+			c.Abort()
 			return
 		}
 		c.Next()

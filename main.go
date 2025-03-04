@@ -52,8 +52,8 @@ func run() {
 
 	c := r.Group("/")
 	c.Use(cacheControl())
-	c.GET("/", indexPage)
 	c.GET("/favicon.ico", favicon)
+	c.GET("/", indexPage)
 
 	log.Printf("%s start HTTP server @ 0.0.0.0:%s", programName, *port)
 
@@ -92,10 +92,10 @@ func initAttachment() {
 	}
 }
 
-func indexPage(c *gin.Context) {
-	c.FileFromFS(embedDir, http.FS(web))
-}
-
 func favicon(c *gin.Context) {
 	c.Data(http.StatusOK, "image/x-icon", []byte{})
+}
+
+func indexPage(c *gin.Context) {
+	c.FileFromFS(embedDir, http.FS(web))
 }
