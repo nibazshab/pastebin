@@ -29,15 +29,16 @@ func requestPaste(c *gin.Context) {
 	if p.getPaste() {
 		if p.Text != "" {
 			c.Data(http.StatusOK, "text/plain; charset=utf-8", []byte(p.Text))
-		} else {
-			_fs := filepath.Join(attDir, p.Uid, p.FileName)
-
-			if !p.Preview {
-				c.FileAttachment(_fs, p.FileName)
-			}
-			c.Writer.Header().Set("Content-Disposition", fmt.Sprintf("inline; filename=\"%s\"", p.FileName))
-			c.File(_fs)
+			return
 		}
+		_fs := filepath.Join(attDir, p.Uid, p.FileName)
+
+		if !p.Preview {
+			c.FileAttachment(_fs, p.FileName)
+			return
+		}
+		c.Writer.Header().Set("Content-Disposition", fmt.Sprintf("inline; filename=\"%s\"", p.FileName))
+		c.File(_fs)
 	}
 }
 
@@ -85,6 +86,7 @@ func uploadPaste(c *gin.Context) {
 
 	if _t {
 		text, _ := io.ReadAll(file)
+
 		p.Text = string(text)
 		p.Size = fileHeader.Size
 		p.input()
@@ -107,9 +109,8 @@ func (p *Paste) input() {
 		p.HashKey = convHash(p.Uid)
 		if p.newPaste() {
 			break
-		} else {
-			n++
-			p.Uid = randUid(n)
 		}
+		n++
+		p.Uid = randUid(n)
 	}
 }
