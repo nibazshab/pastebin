@@ -39,3 +39,7 @@ func (p *Paste) getPaste() bool {
 func (p *Paste) newPaste() bool {
 	return db.Create(p).Error == nil
 }
+
+func (p *Paste) deletePaste() {
+	db.Delete(p)
+}

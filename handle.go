@@ -75,6 +75,8 @@ func uploadPaste(c *gin.Context) {
 		p.Preview = _t || strings.HasPrefix(mime, "image") && fileHeader.Size < imagePreviewSize
 	}
 
+	log.Printf("%s | %s", p.Uid, requestIp(c.Request))
+
 	if _t {
 		text, _ := io.ReadAll(file)
 
@@ -87,11 +89,16 @@ func uploadPaste(c *gin.Context) {
 		p.inputNewPaste()
 
 		_fs := filepath.Join(attDir, p.Uid, p.FileName)
-		c.SaveUploadedFile(fileHeader, _fs)
+		err = c.SaveUploadedFile(fileHeader, _fs)
+		if err != nil {
+			p.deletePaste()
+			c.Status(http.StatusInternalServerError)
+			log.Printf(err.Error())
+			return
+		}
 	}
 
 	c.String(http.StatusOK, p.Uid)
-	log.Printf("%s | %s", p.Uid, getRequestIp(c.Request))
 }
 
 func (p *Paste) inputNewPaste() {

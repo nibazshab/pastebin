@@ -18,7 +18,7 @@ func cacheControl() gin.HandlerFunc {
 	}
 }
 
-func getRequestIp(req *http.Request) string {
+func requestIp(req *http.Request) string {
 	ip := req.Header.Get("X-Forwarded-For")
 	if ip == "" {
 		ip = req.RemoteAddr
