@@ -1,12 +1,9 @@
 package main
 
 import (
-	"errors"
 	"hash/fnv"
-	"io/fs"
 	"math/rand"
 	"net/http"
-	"os"
 	"path/filepath"
 	"time"
 	"unsafe"
@@ -29,23 +26,7 @@ func getRequestIp(req *http.Request) string {
 	return ip
 }
 
-var dataPath string
-
 func objectPath(objName string) string {
-	if dataPath == "" {
-		if filepath.IsAbs(*dir) {
-			dataPath = filepath.Clean(*dir)
-		} else {
-			ex, _ := os.Executable()
-			dataPath = filepath.Join(filepath.Dir(ex), *dir)
-		}
-
-		_, err := os.Stat(dataPath)
-		if errors.Is(err, fs.ErrNotExist) {
-			os.MkdirAll(dataPath, 0o755)
-		}
-	}
-
 	return filepath.Join(dataPath, objName)
 }
 
