@@ -26,7 +26,7 @@ const (
 func requestPaste(c *gin.Context) {
 	uid := c.Param("uid")
 
-	p := &Paste{
+	p := Paste{
 		HashKey: convHash(uid),
 	}
 
@@ -57,7 +57,7 @@ func uploadPaste(c *gin.Context) {
 	file, _ := fileHeader.Open()
 	defer file.Close()
 
-	p := &Paste{
+	p := Paste{
 		Uid: randUid(uidLength),
 	}
 
