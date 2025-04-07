@@ -22,7 +22,8 @@ const (
 	embedDir   = "dist/"
 	attDirName = "attachment"
 
-	programName = "Pastebin"
+	programName = "pastebin"
+	version     = "1.1.3"
 )
 
 var (
@@ -31,13 +32,11 @@ var (
 	dataPath string
 	attDir   string
 	port     *string
-
-	version string
 )
 
 func main() {
 	config()
-	initDb()
+	database()
 	run()
 }
 
@@ -45,8 +44,9 @@ func run() {
 	gin.SetMode(gin.ReleaseMode)
 	r := gin.New()
 
-	r.GET("/:uid", requestPaste)
-	r.POST("/", maxBodySizeMiddleware(), uploadPaste)
+	r.GET("/:uid", getPasteHandler)
+	r.POST("/", limitRequest(), createPasteHandler)
+	r.DELETE("/:uid", deletePasteHandler)
 
 	c := r.Group("/")
 	c.Use(cacheControl())
@@ -67,8 +67,8 @@ func run() {
 }
 
 func config() {
-	port = flag.String("port", portDef, "PORT")
-	dir := flag.String("dir", dirDef, "DIR")
+	port = flag.String("port", portDef, "server port")
+	dir := flag.String("dir", dirDef, "data directory")
 	v := flag.Bool("v", false, "version")
 
 	flag.Parse()

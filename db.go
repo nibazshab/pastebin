@@ -25,21 +25,21 @@ func (*Paste) TableName() string {
 	return tableName
 }
 
-func initDb() {
+func database() {
 	dbFile := objectPath(dbName)
 	db, _ = gorm.Open(sqlite.Open(dbFile + "?_journal=WAL&_vacuum=incremental"))
 
 	db.AutoMigrate(&Paste{})
 }
 
-func (p *Paste) getPaste() bool {
+func (p *Paste) get() bool {
 	return db.Model(p).First(p).Error == nil
 }
 
-func (p *Paste) newPaste() bool {
+func (p *Paste) create() bool {
 	return db.Create(p).Error == nil
 }
 
-func (p *Paste) deletePaste() {
+func (p *Paste) delete() {
 	db.Delete(p)
 }

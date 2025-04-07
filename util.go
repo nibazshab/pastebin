@@ -26,14 +26,14 @@ func requestIp(req *http.Request) string {
 	return ip
 }
 
-func objectPath(objName string) string {
-	return filepath.Join(dataPath, objName)
+func objectPath(obj string) string {
+	return filepath.Join(dataPath, obj)
 }
 
 func convHash(uid string) int64 {
-	hasher := fnv.New64a()
-	hasher.Write([]byte(uid))
-	return int64(hasher.Sum64())
+	hash := fnv.New64a()
+	hash.Write([]byte(uid))
+	return int64(hash.Sum64())
 }
 
 // http://stackoverflow.com/questions/22892120/how-to-generate-a-random-string-of-a-fixed-length-in-golang

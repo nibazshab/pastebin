@@ -23,30 +23,30 @@ const (
 	textPreviewSize  = 1 << 20
 )
 
-func requestPaste(c *gin.Context) {
+func getPasteHandler(c *gin.Context) {
 	uid := c.Param("uid")
 
-	p := Paste{
+	paste := Paste{
 		HashKey: convHash(uid),
 	}
 
-	if p.getPaste() {
-		if p.Text != "" {
-			c.Data(http.StatusOK, "text/plain; charset=utf-8", []byte(p.Text))
+	if paste.get() {
+		if paste.Text != "" {
+			c.Data(http.StatusOK, "text/plain; charset=utf-8", []byte(paste.Text))
 			return
 		}
-		_fs := filepath.Join(attDir, p.Uid, p.FileName)
+		_fs := filepath.Join(attDir, paste.Uid, paste.FileName)
 
-		if !p.Preview {
-			c.FileAttachment(_fs, p.FileName)
+		if !paste.Preview {
+			c.FileAttachment(_fs, paste.FileName)
 			return
 		}
-		c.Writer.Header().Set("Content-Disposition", fmt.Sprintf("inline; filename=\"%s\"", p.FileName))
+		c.Writer.Header().Set("Content-Disposition", fmt.Sprintf("inline; filename=\"%s\"", paste.FileName))
 		c.File(_fs)
 	}
 }
 
-func uploadPaste(c *gin.Context) {
+func createPasteHandler(c *gin.Context) {
 	fileHeader, err := c.FormFile(formName)
 	if err != nil {
 		c.String(http.StatusBadRequest, fmt.Sprintf("Form name != %s", formName))
@@ -91,7 +91,7 @@ func uploadPaste(c *gin.Context) {
 		_fs := filepath.Join(attDir, p.Uid, p.FileName)
 		err = c.SaveUploadedFile(fileHeader, _fs)
 		if err != nil {
-			p.deletePaste()
+			p.delete()
 			c.Status(http.StatusInternalServerError)
 			log.Printf(err.Error())
 			return
@@ -101,11 +101,20 @@ func uploadPaste(c *gin.Context) {
 	c.String(http.StatusOK, p.Uid)
 }
 
+func deletePasteHandler(c *gin.Context) {
+	uid := c.Param("uid")
+	paste := Paste{
+		HashKey: convHash(uid),
+	}
+	paste.delete()
+	c.Status(http.StatusOK)
+}
+
 func (p *Paste) inputNewPaste() {
 	n := uidLength
 	for {
 		p.HashKey = convHash(p.Uid)
-		if p.newPaste() {
+		if p.create() {
 			break
 		}
 		n++
@@ -113,7 +122,7 @@ func (p *Paste) inputNewPaste() {
 	}
 }
 
-func maxBodySizeMiddleware() gin.HandlerFunc {
+func limitRequest() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		if c.Request.ContentLength > maxBodySize {
 			c.String(http.StatusRequestEntityTooLarge, fmt.Sprintf("Request > %d", maxBodySize))

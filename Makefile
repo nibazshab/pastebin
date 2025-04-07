@@ -1,37 +1,27 @@
-MUSL_LINK="https://musl.cc/x86_64-linux-musl-cross.tgz"
-MUSL_DIR=musllib
-
-CC="$(PWD)/$(MUSL_DIR)/bin/x86_64-linux-musl-gcc"
-
-FLAG="-s -w --extldflags '-static' \
- -X main.version=$(VERSION)"
+MUSL_LINK=https://musl.cc/x86_64-linux-musl-cross.tgz
+MUSL_DIR=muslgcc
+MUSL_BIN=$(MUSL_DIR)/bin/x86_64-linux-musl-gcc
 
 CGO_ENABLED=1
 GOOS=linux
 GOARCH=amd64
-
-VERSION=$(shell git describe --abbrev=0 --tags)
+CC="$(CURDIR)/$(MUSL_BIN)"
+FLAG=-s -w --extldflags -static
 
 all: build
 
-golib:
+deps:
 	go mod tidy
 
-cclib:
-	if [ ! -d "$(MUSL_DIR)" ]; then \
-		mkdir -p $(MUSL_DIR) && \
-		wget -O $(MUSL_DIR).tgz $(MUSL_LINK) && \
-		tar -zxf $(MUSL_DIR).tgz --strip-components=1 -C $(MUSL_DIR) && \
-		rm $(MUSL_DIR).tgz; \
-	fi
+$(MUSL_BIN):
+	mkdir -p $(MUSL_DIR)
+	wget -O $(MUSL_DIR).tgz $(MUSL_LINK)
+	tar -zxf $(MUSL_DIR).tgz --strip-components=1 -C $(MUSL_DIR)
 
-build: golib cclib
+build: deps $(MUSL_BIN)
 	CGO_ENABLED=$(CGO_ENABLED) GOOS=$(GOOS) GOARCH=$(GOARCH) CC=$(CC) go build -ldflags=$(FLAG)
 
 clean:
-	rm -f pastebin
+	rm -rf $(MUSL_DIR) $(MUSL_DIR).tgz
 
-cleanall:
-	rm -rf $(MUSL_DIR) pastebin
-
-.PHONY: all golib cclib build clean cleanall
+.PHONY: all deps build clean

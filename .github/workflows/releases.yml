@@ -22,7 +22,7 @@ jobs:
 
     - run: |
         rm -rf dist/*
-        tar -czvf dist/pastebin-linux-amd64.tar.gz pastebin
+        tar -zcvf dist/pastebin-linux-amd64.tar.gz pastebin
 
     - uses: softprops/action-gh-release@v2
       env:
