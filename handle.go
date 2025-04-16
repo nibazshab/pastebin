@@ -1,146 +1,250 @@
 package main
 
 import (
-	"errors"
-	"fmt"
+	"crypto/rand"
 	"io"
 	"log"
-	"net/http"
+	"mime/multipart"
+	"net/url"
 	"path/filepath"
+	"strconv"
 	"strings"
 
 	"github.com/gin-gonic/gin"
 )
 
 const (
-	uidLength   = 4
-	maxBodySize = 100 * 1024 * 1024
+	uidLength = 4
+	uidLimit  = 32
+	bodyLimit = 100 << 20
 
-	formName         = "f"
-	previewHeader    = "X-V"
-	notView          = "1"
-	imagePreviewSize = 5 << 20
-	textPreviewSize  = 1 << 20
+	formName    = "f"
+	tokenHeader = "token"
+	typeHeader  = "type"
+	inline      = 1
+	attachment  = 2
+	link        = 3
+	html        = 4
 )
 
-func getPasteHandler(c *gin.Context) {
-	uid := c.Param("uid")
+var typeLimits = map[string]int64{
+	"text":  1 << 20,
+	"image": 5 << 20,
+}
 
-	paste := Paste{
-		HashKey: convHash(uid),
-	}
-
-	if paste.get() {
-		if paste.Text != "" {
-			c.Data(http.StatusOK, "text/plain; charset=utf-8", []byte(paste.Text))
-			return
-		}
-		_fs := filepath.Join(attDir, paste.Uid, paste.FileName)
-
-		if !paste.Preview {
-			c.FileAttachment(_fs, paste.FileName)
-			return
-		}
-		c.Writer.Header().Set("Content-Disposition", fmt.Sprintf("inline; filename=\"%s\"", paste.FileName))
-		c.File(_fs)
-	}
+type resp struct {
+	Code  int    `json:",omitempty"`
+	Msg   string `json:",omitempty"`
+	Link  string `json:",omitempty"`
+	Token string `json:",omitempty"`
 }
 
 func createPasteHandler(c *gin.Context) {
 	fileHeader, err := c.FormFile(formName)
 	if err != nil {
-		c.String(http.StatusBadRequest, fmt.Sprintf("Form name != %s", formName))
+		c.IndentedJSON(400, resp{
+			Code: 400,
+			Msg:  "form name must be: " + formName,
+		})
 		return
 	}
-	xv := c.GetHeader(previewHeader)
 
-	file, _ := fileHeader.Open()
-	defer file.Close()
-
-	p := Paste{
-		Uid: randUid(uidLength),
+	th, _ := strconv.Atoi(c.GetHeader(typeHeader))
+	if th != inline && th != attachment && th != link && th != html {
+		th = inline
 	}
 
-	var _t bool
-	if xv == notView {
-		_t = false
-		p.Preview = false
-	} else {
-		buf := make([]byte, 512)
-		num, _ := file.Read(buf)
-		file.Seek(0, io.SeekStart)
-		mime := http.DetectContentType(buf[:num])
+	var paste Paste
+	var e bool
 
-		_t = strings.HasPrefix(mime, "text") && fileHeader.Size < textPreviewSize
-		p.Preview = _t || strings.HasPrefix(mime, "image") && fileHeader.Size < imagePreviewSize
+	switch th {
+	case html:
+		e = paste.htmlCreate(c, fileHeader)
+	case link:
+		e = paste.linkCreate(c, fileHeader)
+	case attachment:
+		e = paste.attachmentCreate(c, fileHeader)
+	default:
+		e = paste.inlineCreate(c, fileHeader)
 	}
 
-	log.Printf("%s | %s", p.Uid, requestIp(c.Request))
+	if !e {
+		c.IndentedJSON(500, resp{
+			Code: 500,
+			Msg:  "paste fail",
+		})
+		return
+	}
 
-	if _t {
-		text, _ := io.ReadAll(file)
+	log.Print(paste.Uid, " ", c.RemoteIP())
 
-		p.Text = string(text)
-		p.Size = fileHeader.Size
-		p.inputNewPaste()
+	c.IndentedJSON(200, resp{
+		Link:  c.Request.Host + "/" + paste.Uid,
+		Token: paste.Token,
+	})
+}
+
+func (p *Paste) inlineCreate(c *gin.Context, fh *multipart.FileHeader) bool {
+	f, _ := fh.Open()
+	defer f.Close()
+
+	e, t := typeCheck(f, fh.Size)
+	if !e {
+		return p.attachmentCreate(c, fh)
+	}
+
+	bytes, _ := io.ReadAll(f)
+
+	if t == "text" {
+		*p = Paste{
+			Token: rand.Text(),
+			Type:  inline,
+			Size:  fh.Size,
+			Text:  strings.TrimSpace(string(bytes)),
+		}
+		return p.create()
 	} else {
-		p.FileName = fileHeader.Filename
-		p.Size = fileHeader.Size
-		p.inputNewPaste()
+		*p = Paste{
+			Token:    rand.Text(),
+			Type:     inline,
+			Size:     fh.Size,
+			FileName: fh.Filename,
+		}
 
-		_fs := filepath.Join(attDir, p.Uid, p.FileName)
-		err = c.SaveUploadedFile(fileHeader, _fs)
-		if err != nil {
+		if !p.create() {
+			return false
+		}
+
+		if err := c.SaveUploadedFile(fh, filepath.Join(attDir, p.Uid, p.FileName)); err != nil {
+			log.Print(err.Error())
 			p.delete()
-			c.Status(http.StatusInternalServerError)
-			log.Printf(err.Error())
-			return
+
+			return false
+		}
+		return true
+	}
+}
+
+func (p *Paste) attachmentCreate(c *gin.Context, fh *multipart.FileHeader) bool {
+	*p = Paste{
+		Token:    rand.Text(),
+		Type:     attachment,
+		Size:     fh.Size,
+		FileName: fh.Filename,
+	}
+
+	if !p.create() {
+		return false
+	}
+
+	if err := c.SaveUploadedFile(fh, filepath.Join(attDir, p.Uid, p.FileName)); err != nil {
+		log.Print(err.Error())
+		p.delete()
+
+		return false
+	}
+
+	return true
+}
+
+func (p *Paste) linkCreate(c *gin.Context, fh *multipart.FileHeader) bool {
+	f, _ := fh.Open()
+	defer f.Close()
+
+	e, t := typeCheck(f, fh.Size)
+	if t != "text" || !e {
+		return p.attachmentCreate(c, fh)
+	}
+
+	bytes, _ := io.ReadAll(f)
+	text := strings.TrimSpace(string(bytes))
+
+	if _, err := url.ParseRequestURI(text); err != nil {
+		return p.inlineCreate(c, fh)
+	}
+
+	*p = Paste{
+		Token: rand.Text(),
+		Type:  link,
+		Size:  fh.Size,
+		Text:  text,
+	}
+
+	return p.create()
+}
+
+func (p *Paste) htmlCreate(c *gin.Context, fh *multipart.FileHeader) bool {
+	f, _ := fh.Open()
+	defer f.Close()
+
+	e, t := typeCheck(f, fh.Size)
+	if t != "text" || !e {
+		return p.attachmentCreate(c, fh)
+	}
+
+	bytes, _ := io.ReadAll(f)
+
+	*p = Paste{
+		Token: rand.Text(),
+		Type:  html,
+		Size:  fh.Size,
+		Text:  strings.TrimSpace(string(bytes)),
+	}
+	return p.create()
+}
+
+func respPasteHandler(c *gin.Context) {
+	paste := Paste{
+		HashKey: convHash(c.Param("uid")),
+	}
+
+	if !paste.get() {
+		c.JSON(200, resp{
+			Code: 200,
+			Msg:  "null",
+		})
+		return
+	}
+
+	switch paste.Type {
+	case html:
+		c.Data(200, "text/html; charset=utf-8", []byte(paste.Text))
+	case link:
+		c.Redirect(302, paste.Text)
+	case attachment:
+		fs := filepath.Join(attDir, paste.Uid, paste.FileName)
+		c.FileAttachment(fs, paste.FileName)
+	default:
+		if paste.Text != "" {
+			fs := filepath.Join(attDir, paste.Uid, paste.FileName)
+			c.Writer.Header().Set("Content-Disposition", "inline; filename='"+paste.FileName+"'")
+			c.File(fs)
+		} else {
+			c.Data(200, "text/plain; charset=utf-8", []byte(paste.Text))
 		}
 	}
-
-	c.String(http.StatusOK, p.Uid)
 }
 
 func deletePasteHandler(c *gin.Context) {
-	uid := c.Param("uid")
+	token := c.GetHeader(tokenHeader)
+
+	if token == "" {
+		c.JSON(200, resp{
+			Code: 200,
+			Msg:  "null",
+		})
+		return
+	}
+
 	paste := Paste{
-		HashKey: convHash(uid),
+		HashKey: convHash(c.Param("uid")),
+		Token:   token,
 	}
+
 	paste.delete()
-	c.Status(http.StatusOK)
-}
 
-func (p *Paste) inputNewPaste() {
-	n := uidLength
-	for {
-		p.HashKey = convHash(p.Uid)
-		if p.create() {
-			break
-		}
-		n++
-		p.Uid = randUid(n)
-	}
-}
-
-func limitRequest() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		if c.Request.ContentLength > maxBodySize {
-			c.String(http.StatusRequestEntityTooLarge, fmt.Sprintf("Request > %d", maxBodySize))
-			c.Abort()
-			return
-		}
-		c.Request.Body = http.MaxBytesReader(c.Writer, c.Request.Body, maxBodySize)
-		err := c.Request.ParseMultipartForm(maxBodySize)
-		if err != nil {
-			var maxBytesError *http.MaxBytesError
-			if errors.As(err, &maxBytesError) {
-				c.String(http.StatusRequestEntityTooLarge, fmt.Sprintf("Request > %d", maxBodySize))
-			} else {
-				c.Status(http.StatusBadRequest)
-			}
-			c.Abort()
-			return
-		}
-		c.Next()
-	}
+	c.JSON(200, resp{
+		Code: 200,
+		Msg:  "success",
+	})
 }

@@ -17,13 +17,13 @@ import (
 )
 
 const (
+	version     = "1.1.3"
+	programName = "pastebin"
+
 	portDef    = "10002"
 	dirDef     = "pastebin_data"
 	embedDir   = "dist/"
 	attDirName = "attachment"
-
-	programName = "pastebin"
-	version     = "1.1.3"
 )
 
 var (
@@ -44,14 +44,14 @@ func run() {
 	gin.SetMode(gin.ReleaseMode)
 	r := gin.New()
 
-	r.GET("/:uid", getPasteHandler)
 	r.POST("/", limitRequest(), createPasteHandler)
+	r.GET("/:uid", respPasteHandler)
 	r.DELETE("/:uid", deletePasteHandler)
 
-	c := r.Group("/")
-	c.Use(cacheControl())
-	c.GET("/favicon.ico", favicon)
-	c.GET("/", indexPage)
+	g := r.Group("/")
+	g.Use(cacheControl())
+	g.GET("/favicon.ico", favicon)
+	g.GET("/", indexPage)
 
 	log.Printf("%s start HTTP server @ 0.0.0.0:%s", programName, *port)
 	go func() {
