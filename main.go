@@ -53,7 +53,7 @@ func run() {
 	g.GET("/favicon.ico", favicon)
 	g.GET("/", indexPage)
 
-	log.Printf("%s start HTTP server @ 0.0.0.0:%s", programName, *port)
+	log.Print(programName, " start HTTP server @ 0.0.0.0:", *port)
 	go func() {
 		r.Run(":" + *port)
 	}()
@@ -74,7 +74,7 @@ func config() {
 	flag.Parse()
 
 	if *v {
-		fmt.Printf("%s %s", programName, version)
+		fmt.Print(programName, " ", version)
 		os.Exit(0)
 	}
 
@@ -94,7 +94,7 @@ func config() {
 		}
 	}
 	if info != nil && !info.IsDir() {
-		log.Fatalf("%s 必须是一个有效的目录", *dir)
+		log.Fatal(*dir, " 必须是一个有效的目录")
 	}
 
 	attDir = objectPath(attDirName)
