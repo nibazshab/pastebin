@@ -33,10 +33,10 @@ var typeLimits = map[string]int64{
 }
 
 type resp struct {
-	Code  int    `json:",omitempty"`
-	Msg   string `json:",omitempty"`
-	Link  string `json:",omitempty"`
-	Token string `json:",omitempty"`
+	Code  int    `json:"code,omitempty"`
+	Msg   string `json:"msg,omitempty"`
+	Link  string `json:"link,omitempty"`
+	Token string `json:"token,omitempty"`
 }
 
 func createPasteHandler(c *gin.Context) {
@@ -216,11 +216,11 @@ func respPasteHandler(c *gin.Context) {
 		c.FileAttachment(fs, paste.FileName)
 	default:
 		if paste.Text != "" {
+			c.Data(200, "text/plain; charset=utf-8", []byte(paste.Text))
+		} else {
 			fs := filepath.Join(attDir, paste.Uid, paste.FileName)
 			c.Writer.Header().Set("Content-Disposition", "inline; filename='"+paste.FileName+"'")
 			c.File(fs)
-		} else {
-			c.Data(200, "text/plain; charset=utf-8", []byte(paste.Text))
 		}
 	}
 }

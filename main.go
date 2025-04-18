@@ -17,7 +17,7 @@ import (
 )
 
 const (
-	version     = "1.1.3"
+	version     = "1.2.1"
 	programName = "pastebin"
 
 	portDef    = "10002"

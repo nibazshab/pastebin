@@ -4,233 +4,242 @@
 <head>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>pastebin</title>
-    <style>
-        body {
-            font-family: monospace;
-            margin: 40px 20%;
-        }
-
-        h1 {
-            margin-bottom: 50px;
-        }
-
-        #text-input {
-            margin-bottom: 30px;
-            width: 100%;
-            height: 250px;
-            resize: none;
-            padding: 10px;
-            box-sizing: border-box;
-            outline: none;
-            border-radius: 10px;
-            border: #4f5359 2px dotted;
-        }
-
-        #text-input:focus {
-            border-style: solid;
-        }
-
-        #select-file-button {
-            font-size: small;
-            border: #4f5359 2px dotted;
-            border-radius: 10px;
-            padding: 12px 20px;
-            min-width: 250px;
-            cursor: pointer;
-            display: inline-block
-        }
-
-        #file-input {
-            display: none;
-        }
-
-        #file-upload-area {
-            margin-bottom: 30px;
-        }
-
-        #save-input:disabled {
-            background: #ddd;
-            cursor: not-allowed;
-        }
-
-        #save-input {
-            padding: 12px 35px;
-            cursor: pointer;
-            float: right;
-            border-radius: 10px;
-            border: none;
-            background-color: #000;
-            color: #fff;
-            font-family: monospace;
-        }
-
-        #link {
-            height: 20px;
-            text-align: center;
-        }
-
-        @media (max-width: 480px) {
-            body {
-                margin: 20px 15px;
-            }
-        }
-
-        @media (prefers-color-scheme: dark) {
-            body {
-                background: #151515;
-                color: #ededed;
-            }
-
-            #text-input {
-                background: #151515;
-                color: #ededed;
-                border-color: #949494;
-            }
-
-            #select-file-button {
-                border-color: #949494;
-            }
-
-            #save-input {
-                background-color: #323232;
-            }
-        }
-    </style>
 </head>
+<style>
+    body {
+        padding: 40px 18%;
+    }
+
+    @media (max-width: 480px) {
+        body {
+            padding: 5px;
+        }
+    }
+
+    textarea,
+    span,
+    button,
+    label,
+    select {
+        font-size: 16px;
+        color: #495057;
+        padding: 9px 15px;
+        border-radius: 5px;
+        border: 1px solid #b1b5ba;
+    }
+
+    textarea {
+        box-sizing: border-box;
+        width: 100%;
+        height: 300px;
+        resize: none;
+        padding-left: 13px;
+        outline-color: #92c0f1;
+        margin-bottom: 20px;
+    }
+
+    .t {
+        display: flex;
+        max-width: 400px;
+        margin-top: 20px;
+        margin-bottom: 20px;
+    }
+
+    span {
+        background: #e9ecef;
+    }
+
+    label,
+    select {
+        flex: 1;
+        outline: 0;
+        border-left: 0;
+    }
+
+    label {
+        padding-left: 19px;
+    }
+
+    button {
+        color: #fff;
+        border: 0;
+        background-color: #2787ed;
+        cursor: pointer;
+    }
+
+    button:hover {
+        background-color: #0064cf;
+    }
+
+    .pt {
+        cursor: pointer;
+    }
+
+    .na {
+        cursor: not-allowed;
+    }
+
+    .none {
+        display: none;
+    }
+
+    .t-l {
+        border-radius: 5px 0 0 5px;
+    }
+
+    .t-r {
+        border-radius: 0 5px 5px 0;
+    }
+
+    .t-c {
+        border-radius: 0;
+        border-right: 0;
+        border-left: 0;
+    }
+
+    .t-p {
+        background-color: #fff;
+        flex: 1;
+        border-left: 0;
+        padding-left: 19px;
+    }
+</style>
 
 <body>
-<h1>pastebin</h1>
-<form id="upload-form">
-    <textarea id="text-input" placeholder="write here"></textarea>
-    <div id="file-upload-area">
-        <label for="file-input" id="select-file-button">
-            <a role="button">Select or drop a attachment</a>
-        </label>
-        <input type="file" id="file-input" name="file"/>
+<div id="a">
+    <div class="t">
+        <span class="t-l">类型</span>
+        <select class="t-r">
+            <option value="1">可预览</option>
+            <option value="2">文件</option>
+            <option value="3">短链接</option>
+            <option value="4">HTML 页面</option>
+        </select>
     </div>
-    <p id="link"></p>
-    <button id="save-input">Save</button>
-</form>
+    <div class="t">
+        <span class="t-l">内容</span>
+        <label for="f" class="t-c pt">文本框输入</label>
+        <input type="file" class="none" id="f" />
+        <span class="t-r"><input class="na" type="checkbox" disabled></span>
+    </div>
+    <textarea placeholder="一言加载中..."></textarea>
+    <button id="d_a">保存</button>
+</div>
+<div id="b" class="none">
+    <div class="t">
+        <span class="t-l">链接</span>
+        <span class="t-r t-p" id="link"></span>
+    </div>
+    <div class="t">
+        <span class="t-l">令牌</span>
+        <span class="t-r t-p" id="token"></span>
+    </div>
+    <button id="d_b">返回主页</button>
+</div>
 </body>
 <script>
-    const uploadForm = document.getElementById('upload-form');
-    const selectFileButton = document.getElementById('select-file-button');
-    const fileInput = document.getElementById('file-input');
-    const textInput = document.getElementById('text-input');
-    const saveButton = document.getElementById('save-input');
-    const linkElement = document.getElementById('link');
+    const i_f = document.getElementById("f");
+    const i_t = document.querySelector("textarea");
+    const f_l = document.querySelector("label[for='f']");
+    const f_c = document.querySelector("input.na");
 
-    const MAX_FILE_SIZE = 104857600;
-    const IMAGE_PREVIEW_SIZE = 5242880;
-    let xv = false;
-    let hasFile = false;
+    let _a;
 
-    const updateFileButtonState = (filename, isError = false) => {
-        selectFileButton.textContent = filename
-            ? `Attached: ${filename}`
-            : "Select or drop an attachment";
-    };
+    i_f.addEventListener("change", function () {
+        if (this.files.length > 0) {
+            _a = i_t.value;
 
-    const handleFileSelection = (file) => {
-        if (!file) {
-            xv = false
-            hasFile = false;
-            updateFileButtonState(null);
-            fileInput.value = '';
+            f_l.textContent = "上传本地文件";
+            f_c.checked = true;
+            i_t.value = this.files[0].name;
+            i_t.readOnly = true;
+        } else {
+            f_l.textContent = "文本框输入";
+            f_c.checked = false;
+            i_t.value = _a;
+            i_t.readOnly = false;
+        }
+    });
+
+    document.body.addEventListener("paste", (e) => {
+        const p = e.clipboardData.items[0];
+        if (p?.kind === "file" && p.type.startsWith("image/")) {
+            const _b = new DataTransfer();
+            _b.items.add(p.getAsFile());
+            i_f.files = _b.files;
+
+            f_l.textContent = "剪切板图片";
+            f_c.checked = true;
+            i_t.value = "image";
+            i_t.readOnly = true;
+        }
+    });
+
+    const i_o = document.querySelector("select");
+    const d_a = document.getElementById("d_a");
+    const b_a = document.getElementById("a");
+    const b_b = document.getElementById("b");
+    const s_l = document.getElementById("link");
+    const s_t = document.getElementById("token");
+
+    const sizeLimit = 104857600;
+
+    d_a.addEventListener("click", function () {
+        const i_a = i_t.value;
+        const i_b = i_f.files[0];
+
+        if (!i_a && !i_b) return;
+
+        const f = f_c.checked ? i_b : new File([i_a], "f");
+
+        if (f.size > sizeLimit) {
+            i_t.value = "文件太大，必须小于 " + sizeLimit + " b";
             return;
         }
 
-        const isXVType = type => file.type.startsWith(type);
-        if (isXVType('image') && file.size < IMAGE_PREVIEW_SIZE) {
-            xv = true;
-        }
+        const form = new FormData();
+        form.append("f", f);
 
-        const dataTransfer = new DataTransfer();
-        dataTransfer.items.add(file);
-        fileInput.files = dataTransfer.files;
-        hasFile = true;
-        updateFileButtonState(file.name);
-    };
+        b_a.classList.toggle('none');
+        b_b.classList.remove('none');
+        s_l.textContent = "正在加载...";
+        s_t.textContent = "正在加载...";
 
-    fileInput.addEventListener('change', () => {
-        const file = fileInput.files[0];
-        file ? handleFileSelection(file) : handleFileSelection(null);
-    });
-
-    uploadForm.addEventListener('dragover', (e) => {
-        e.preventDefault();
-        uploadForm.classList.add('dragover');
-    });
-
-    uploadForm.addEventListener('dragleave', () => {
-        uploadForm.classList.remove('dragover');
-    });
-
-    uploadForm.addEventListener('drop', (e) => {
-        e.preventDefault();
-        uploadForm.classList.remove('dragover');
-        const file = e.dataTransfer.files[0];
-        if (file) handleFileSelection(file);
-    });
-
-    uploadForm.addEventListener('paste', (e) => {
-        const clipboardItems = e.clipboardData.items;
-        for (const item of clipboardItems) {
-            if (item.kind === 'file' && item.type.startsWith('image/')) {
-                const file = item.getAsFile();
-                if (file) handleFileSelection(file);
-                break;
+        fetch(window.location.href, {
+            method: "POST",
+            body: form,
+            headers: {
+                "type": i_o.value,
             }
-        }
-    });
-
-    uploadForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-
-        if (saveButton.disabled) return;
-        saveButton.disabled = true;
-        linkElement.textContent = 'Saving...';
-
-        try {
-            const formData = new FormData();
-            let uploadFile;
-
-            if (hasFile) {
-                const file = fileInput.files[0];
-                if (file.size > MAX_FILE_SIZE) {
-                    throw new Error('File size exceeds 100MB limit');
-                }
-                uploadFile = file;
-            } else {
-                const text = textInput.value.trim();
-                if (!text) {
-                    textInput.focus();
-                    throw new Error('Please enter text or select a file');
-                }
-                xv = true
-                uploadFile = new File([text], "content.txt", {type: "text/plain"});
-            }
-
-            formData.append('f', uploadFile);
-
-            const response = await fetch(window.location.href, {
-                method: 'POST',
-                body: formData,
-                headers: {'X-V': xv ? '0' : '1'}
+        })
+            .then(response => response.json())
+            .then(msg => {
+                s_l.textContent = msg.link;
+                s_t.textContent = msg.token;
             });
-
-            if (!response.ok) throw new Error('Server returned an error');
-
-            const result = await response.text();
-            linkElement.innerHTML = `${window.location.href}${result}`;
-        } catch (error) {
-            console.error('Upload error:', error);
-            linkElement.textContent = `Error: ${error.message}`;
-            linkElement.style.color = '#ff0000';
-        }
     });
 
-    updateFileButtonState(null);
+    const d_b = document.getElementById("d_b");
+
+    d_b.addEventListener("click", function () {
+        f_l.textContent = "文本框输入";
+        f_c.checked = false;
+        i_t.value = "";
+        i_t.readOnly = false;
+        _a = "";
+        const _b = new DataTransfer();
+        i_f.files = _b.files;
+
+        b_a.classList.remove('none');
+        b_b.classList.toggle('none');
+    });
+</script>
+
+<script defer src="https://yyapi.xpdbk.com/api/ian?type=js"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        i_t.placeholder = vhIan;
+    });
 </script>
 
 </html>
