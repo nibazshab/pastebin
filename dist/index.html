@@ -190,7 +190,7 @@
 
         if (!i_a && !i_b) return;
 
-        const f = f_c.checked ? i_b : new File([i_a], "f");
+        const f = f_c.checked ? i_b : new File([i_a], "text.txt");
 
         if (f.size > sizeLimit) {
             i_t.value = "文件太大，必须小于 " + sizeLimit + " b";
@@ -224,9 +224,8 @@
     d_b.addEventListener("click", function () {
         f_l.textContent = "文本框输入";
         f_c.checked = false;
-        i_t.value = "";
+        i_t.value = _a = "";
         i_t.readOnly = false;
-        _a = "";
         const _b = new DataTransfer();
         i_f.files = _b.files;
 
