@@ -20,18 +20,21 @@ const (
 	version     = "1.2.1"
 	programName = "pastebin"
 
-	portDef    = "10002"
-	dirDef     = "pastebin_data"
-	embedDir   = "dist/"
-	attDirName = "attachment"
+	port_     = "10002"
+	dataPath_ = "pastebin_data"
+	attDir_   = "attachment"
+
+	webPath = "web"
 )
 
 var (
-	//go:embed all:dist
-	web      embed.FS
+	port     *string
 	dataPath string
 	attDir   string
-	port     *string
+
+	//go:embed all:web
+	web    embed.FS
+	webMap = make(map[string]bool)
 )
 
 func main() {
@@ -44,14 +47,10 @@ func run() {
 	gin.SetMode(gin.ReleaseMode)
 	r := gin.New()
 
-	r.POST("/", limitRequest(), createPasteHandler)
-	r.GET("/:uid", respPasteHandler)
+	r.Use(cacheControl())
+	r.POST("/", limit(), createPasteHandler)
+	r.GET("/*src", static, respPasteHandler)
 	r.DELETE("/:uid", deletePasteHandler)
-
-	g := r.Group("/")
-	g.Use(cacheControl())
-	g.GET("/favicon.ico", favicon)
-	g.GET("/", indexPage)
 
 	log.Print(programName, " start HTTP server @ 0.0.0.0:", *port)
 	go func() {
@@ -67,9 +66,9 @@ func run() {
 }
 
 func config() {
-	port = flag.String("port", portDef, "server port")
-	dir := flag.String("dir", dirDef, "data directory")
 	v := flag.Bool("v", false, "version")
+	port = flag.String("port", port_, "server port")
+	dir := flag.String("dir", dataPath_, "data directory")
 
 	flag.Parse()
 
@@ -97,13 +96,31 @@ func config() {
 		log.Fatal(*dir, " 必须是一个有效的目录")
 	}
 
-	attDir = objectPath(attDirName)
+	attDir = objectPath(attDir_)
+
+	_fs, _ := fs.Sub(web, webPath)
+	fs.WalkDir(_fs, ".", func(path string, d fs.DirEntry, err error) error {
+		if !d.IsDir() {
+			webMap["/"+path] = true
+		}
+		return nil
+	})
 }
 
-func favicon(c *gin.Context) {
-	c.Data(http.StatusOK, "image/x-icon", []byte{})
-}
+func static(c *gin.Context) {
+	src := c.Param("src")
 
-func indexPage(c *gin.Context) {
-	c.FileFromFS(embedDir, http.FS(web))
+	switch src {
+	case "/favicon.ico":
+		c.Data(http.StatusOK, "image/x-icon", []byte{})
+	case "/":
+		c.FileFromFS(webPath+src, http.FS(web))
+	default:
+		if !webMap[src] {
+			c.Next()
+			return
+		}
+		c.FileFromFS(webPath+src, http.FS(web))
+	}
+	c.Abort()
 }

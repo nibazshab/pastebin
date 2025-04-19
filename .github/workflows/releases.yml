@@ -22,8 +22,8 @@ jobs:
     - run: make
 
     - run: |
-        rm -rf dist/*
-        tar -zcvf dist/pastebin-linux-amd64.tar.gz pastebin
+        mkdir dist
+        tar -czvf dist/pastebin-linux-amd64.tar.gz pastebin
 
     - uses: softprops/action-gh-release@v2
       if: ${{ github.event_name != 'workflow_dispatch' }}

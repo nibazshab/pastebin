@@ -100,7 +100,7 @@ func (p *Paste) inlineCreate(c *gin.Context, fh *multipart.FileHeader) bool {
 			Token: rand.Text(),
 			Type:  inline,
 			Size:  fh.Size,
-			Text:  strings.TrimSpace(string(bytes)),
+			Text:  string(bytes),
 		}
 		return p.create()
 	} else {
@@ -188,14 +188,14 @@ func (p *Paste) htmlCreate(c *gin.Context, fh *multipart.FileHeader) bool {
 		Token: rand.Text(),
 		Type:  html,
 		Size:  fh.Size,
-		Text:  strings.TrimSpace(string(bytes)),
+		Text:  string(bytes),
 	}
 	return p.create()
 }
 
 func respPasteHandler(c *gin.Context) {
 	paste := Paste{
-		HashKey: convHash(c.Param("uid")),
+		HashKey: convHash(c.Param("src")[1:]),
 	}
 
 	if !paste.get() {

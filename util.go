@@ -27,7 +27,7 @@ func typeCheck(f multipart.File, n int64) (bool, string) {
 	return false, ""
 }
 
-func limitRequest() gin.HandlerFunc {
+func limit() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		if c.Request.ContentLength > bodyLimit {
 			c.JSON(413, resp{
