@@ -168,6 +168,8 @@
             _b.items.add(p.getAsFile());
             i_f.files = _b.files;
 
+            _a = i_t.value;
+
             f_l.textContent = "剪切板图片";
             f_c.checked = true;
             i_t.value = "image";
@@ -200,8 +202,8 @@
         const form = new FormData();
         form.append("f", f);
 
-        b_a.classList.toggle('none');
-        b_b.classList.remove('none');
+        b_a.classList.toggle("none");
+        b_b.classList.remove("none");
         s_l.textContent = "正在加载...";
         s_t.textContent = "正在加载...";
 
@@ -229,8 +231,8 @@
         const _b = new DataTransfer();
         i_f.files = _b.files;
 
-        b_a.classList.remove('none');
-        b_b.classList.toggle('none');
+        b_a.classList.remove("none");
+        b_b.classList.toggle("none");
     });
 </script>
 
