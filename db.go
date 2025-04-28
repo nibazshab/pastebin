@@ -65,6 +65,8 @@ func (p *Paste) get() bool {
 	return db.First(p).Error == nil
 }
 
-func (p *Paste) delete() {
-	db.Where(p).Delete(&Paste{})
+func (p *Paste) delete() bool {
+	rs := db.Where(p).Delete(&Paste{})
+
+	return rs.Error == nil && rs.RowsAffected > 0
 }

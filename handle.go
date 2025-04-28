@@ -199,8 +199,8 @@ func respPasteHandler(c *gin.Context) {
 	}
 
 	if !paste.get() {
-		c.JSON(200, resp{
-			Code: 200,
+		c.JSON(400, resp{
+			Code: 400,
 			Msg:  "null",
 		})
 		return
@@ -229,8 +229,8 @@ func deletePasteHandler(c *gin.Context) {
 	token := c.GetHeader(tokenHeader)
 
 	if token == "" {
-		c.JSON(200, resp{
-			Code: 200,
+		c.JSON(400, resp{
+			Code: 400,
 			Msg:  "null",
 		})
 		return
@@ -241,7 +241,13 @@ func deletePasteHandler(c *gin.Context) {
 		Token:   token,
 	}
 
-	paste.delete()
+	if !paste.delete() {
+		c.JSON(400, resp{
+			Code: 400,
+			Msg:  "null",
+		})
+		return
+	}
 
 	c.JSON(200, resp{
 		Code: 200,
