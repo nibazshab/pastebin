@@ -1,26 +1,14 @@
-MUSL_LINK=https://musl.cc/x86_64-linux-musl-cross.tgz
-MUSL_DIR=muslgcc
-
-CGO_ENABLED=1
+CGO_ENABLED=0
 GOOS=linux
 GOARCH=amd64
-CC="$(CURDIR)/$(MUSL_DIR)/bin/x86_64-linux-musl-gcc"
-FLAG="-s -w --extldflags -static"
+FLAG="-s -w"
 
 all: build
 
 deps:
 	go mod tidy
 
-$(CC):
-	mkdir -p $(MUSL_DIR)
-	wget -O $(MUSL_DIR).tgz $(MUSL_LINK)
-	tar -zxf $(MUSL_DIR).tgz --strip-components=1 -C $(MUSL_DIR)
+build: deps
+	CGO_ENABLED=$(CGO_ENABLED) GOOS=$(GOOS) GOARCH=$(GOARCH) go build -ldflags=$(FLAG)
 
-build: deps $(CC)
-	CGO_ENABLED=$(CGO_ENABLED) GOOS=$(GOOS) GOARCH=$(GOARCH) CC=$(CC) go build -ldflags=$(FLAG)
-
-clean:
-	rm -rf $(MUSL_DIR) $(MUSL_DIR).tgz
-
-.PHONY: all deps build clean
+.PHONY: all deps build
